@@ -1234,6 +1234,8 @@
       for (const d of ["n", "e", "s", "w"].sort(() => rng() - 0.5)) {
         const n = mazeNeighbor(walls, rows, cols, r, c, d);
         if (!n) continue;
+        // 골인 칸은 마지막 스텝에서만 진입 가능하게 제한
+        if (n.r === end.r && n.c === end.c && path.length + 1 < need) continue;
         if (path.some((p) => p.r === n.r && p.c === n.c)) continue;
         path.push(n);
         dfs(n.r, n.c, path);
@@ -1330,6 +1332,17 @@
     return (p?.bombs || []).filter((b) => !b.cleared);
   }
 
+  function mazeBombPositions(p) {
+    const bombs = unclearedMazeBombs(p);
+    const out = [];
+    let idx = Math.min((p.moves || 0) + 1, (p.maze?.path?.length || 1) - 1);
+    bombs.forEach((b) => {
+      out.push({ wrongId: b.wrongId, pathIndex: idx });
+      idx = Math.min(idx + 1, (p.maze?.path?.length || 1) - 1);
+    });
+    return out;
+  }
+
   function addMazeBombForWrong(base) {
     const mk = monthKey();
     const p = getPuzzleState(mk);
@@ -1372,7 +1385,7 @@
   }
 
   function hasBlockingMazeBomb(p) {
-    return unclearedMazeBombs(p).some((b) => b.pathIndex > p.moves);
+    return (p.moves || 0) < (p.total || 0) && unclearedMazeBombs(p).length > 0;
   }
 
   function mazeEmoji(x, y, emoji, size) {
@@ -1421,7 +1434,7 @@
     lines += mazeWallLine(right, exBot, right, bottom, wt);
     lines += mazeWallLine(left, bottom, right, bottom, wt);
     const bombAt = new Map();
-    unclearedMazeBombs(p).forEach((b) => bombAt.set(b.pathIndex, b.wrongId));
+    mazeBombPositions(p).forEach((b) => bombAt.set(b.pathIndex, b.wrongId));
     let markers = "";
     const startPt = maze.path[0];
     const sx = pad + startPt.c * cs + cs / 2;
@@ -1458,6 +1471,9 @@
       extra = `<p class="maze-bombs-hint">💣 ${bombN}개 · 학습 탭 「오늘 틀린 문제」 복습으로 제거</p>
         <button type="button" class="secondary maze-bomb-btn" data-maze-bomb-review>💣 폭탄 제거하러 복습하기</button>`;
     }
+    if (!done) {
+      extra += `<button type="button" class="secondary maze-bomb-btn" data-maze-step style="margin-top:${bombN > 0 ? "6px" : "8px"};">🪙 100코인으로 한 칸 전진</button>`;
+    }
     return `<div class="maze-wrap">
       <svg class="maze-svg" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="명언 미로">
         <rect x="0" y="0" width="${svgW}" height="${svgH}" fill="#c4b5e0"/>
@@ -1493,6 +1509,12 @@
         startSession("오늘 틀린 문제 (💣 제거)", "review|today", false, true);
       });
     }
+    const stepBtn = box.querySelector("[data-maze-step]");
+    if (stepBtn) {
+      stepBtn.addEventListener("click", () => {
+        moveMazeStepFor(mk);
+      });
+    }
     const prog = document.getElementById("puzzleProg");
     if (prog) {
       const bn = unclearedMazeBombs(p).length;
@@ -1516,6 +1538,26 @@
       }
       save();
     }
+  }
+
+  function moveMazeStepFor(mk) {
+    const p = getPuzzleState(mk);
+    if (state.coins < 100) {
+      toast("코인이 부족해요 (100 필요)");
+      return;
+    }
+    if (p.moves >= p.total) {
+      toast("이미 미로를 탈출했어요");
+      return;
+    }
+    if (hasBlockingMazeBomb(p)) {
+      toast("💣를 먼저 제거해 주세요 · 「오늘 틀린 문제」 복습");
+      return;
+    }
+    state.coins -= 100;
+    revealPuzzleLetter(mk);
+    renderAll();
+    toast("미로에서 한 칸 전진했어요 ✨");
   }
 
   function j2k(id, jp, answersPipe) {
@@ -2627,24 +2669,7 @@
   }
 
   function repairPuzzle() {
-    const mk = monthKeyFromDate(calCursor);
-    const p = getPuzzleState(mk);
-    if (state.coins < 100) {
-      toast("코인이 부족해요 (100 필요)");
-      return;
-    }
-    if (p.moves >= p.total) {
-      toast("이미 미로를 탈출했어요");
-      return;
-    }
-    if (hasBlockingMazeBomb(p)) {
-      toast("💣를 먼저 제거해 주세요 · 「오늘 틀린 문제」 복습");
-      return;
-    }
-    state.coins -= 100;
-    revealPuzzleLetter(mk);
-    renderAll();
-    toast("미로에서 한 칸 전진했어요 ✨");
+    moveMazeStepFor(monthKeyFromDate(calCursor));
   }
 
   function syncQuestDay() {
@@ -3863,10 +3888,10 @@
     let vocab = [];
     let learn = [];
     if (calTrendMode === "today") {
-      const d = new Date();
+      const d = new Date(calFocusDate);
       const key = ymd(d);
       const t = (state.studyTrendByYmd || {})[key] || { vocabViews: 0, learnCount: 0 };
-      labels.push("오늘");
+      labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
       vocab.push(t.vocabViews || 0);
       learn.push(t.learnCount || 0);
     } else if (calTrendMode === "week") {
@@ -3918,13 +3943,18 @@
     const totalLearn = learn.reduce((a, b) => a + b, 0);
     let detail = "";
     if (calTrendMode === "today") {
-      const t = (state.studyTrendByYmd || {})[ymd()] || { learnByPath: {} };
+      const key = ymd(new Date(calFocusDate));
+      const t = (state.studyTrendByYmd || {})[key] || { learnByPath: {} };
       const top = Object.entries(t.learnByPath || {})
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
         .map(([k, v]) => `${k} ${v}`)
         .join(" · ");
-      detail = `<div class="trend-foot">오늘 단어장 ${totalVocab}개 · 학습 ${totalLearn}문제${top ? ` · ${top}` : ""}</div>`;
+      const prevDate = new Date(calFocusDate.getFullYear(), calFocusDate.getMonth(), calFocusDate.getDate() - 1);
+      const prevKey = ymd(prevDate);
+      const p = (state.studyTrendByYmd || {})[prevKey] || { vocabViews: 0, learnCount: 0 };
+      detail = `<div class="trend-foot">선택일 단어장 ${totalVocab}개 · 학습 ${totalLearn}문제${top ? ` · ${top}` : ""}</div>
+        <div class="trend-foot">전날(${prevDate.getMonth() + 1}/${prevDate.getDate()}) 단어장 ${p.vocabViews || 0}개 · 학습 ${p.learnCount || 0}문제</div>`;
     } else {
       detail = `<div class="trend-foot">단어장 합계 ${totalVocab}개 · 학습 합계 ${totalLearn}문제</div>`;
     }
@@ -3970,7 +4000,7 @@
         <div class="trend-graph-head">
           <span>${
             calTrendMode === "today"
-              ? "오늘"
+              ? "선택일"
               : calTrendMode === "week"
                 ? "선택 주(일~토)"
                 : `${m}월`
