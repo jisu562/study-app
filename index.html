@@ -1182,116 +1182,135 @@
     return `${r},${c}`;
   }
 
-  function carveFullMaze(rows, cols, seed) {
-    const rng = seededRng(seed);
-    const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
-    const walls = Array.from({ length: rows }, () =>
-      Array.from({ length: cols }, () => ({ n: true, e: true, s: true, w: true }))
-    );
-    function carve(r, c) {
-      visited[r][c] = true;
-      const dirs = [
-        [-1, 0, "n", "s"],
-        [0, 1, "e", "w"],
-        [1, 0, "s", "n"],
-        [0, -1, "w", "e"],
-      ].sort(() => rng() - 0.5);
-      for (const [dr, dc, w1, w2] of dirs) {
-        const nr = r + dr;
-        const nc = c + dc;
-        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
-          walls[r][c][w1] = false;
-          walls[nr][nc][w2] = false;
-          carve(nr, nc);
-        }
-      }
-    }
-    carve(0, 0);
-    return walls;
+  function gridNeighbors(rows, cols, r, c) {
+    return [
+      { r: r - 1, c, d: "n" },
+      { r, c: c + 1, d: "e" },
+      { r: r + 1, c, d: "s" },
+      { r, c: c - 1, d: "w" },
+    ].filter((n) => n.r >= 0 && n.r < rows && n.c >= 0 && n.c < cols);
   }
 
-  function mazeNeighbor(walls, rows, cols, r, c, dir) {
-    const w = walls[r][c];
-    if (dir === "n" && !w.n && r > 0) return { r: r - 1, c };
-    if (dir === "e" && !w.e && c < cols - 1) return { r, c: c + 1 };
-    if (dir === "s" && !w.s && r < rows - 1) return { r: r + 1, c };
-    if (dir === "w" && !w.w && c > 0) return { r, c: c - 1 };
-    return null;
+  function oppositeDir(d) {
+    if (d === "n") return "s";
+    if (d === "s") return "n";
+    if (d === "e") return "w";
+    return "e";
   }
 
-  function findQuestPath(walls, rows, cols, start, end, total, seed) {
-    const rng = seededRng(seed + 77);
-    const need = total + 1;
-    let found = null;
-    function dfs(r, c, path) {
-      if (found) return;
-      if (path.length > need) return;
-      if (path.length === need && r === end.r && c === end.c) {
-        found = path.map((p) => ({ r: p.r, c: p.c }));
-        return;
-      }
-      if (path.length >= need) return;
-      for (const d of ["n", "e", "s", "w"].sort(() => rng() - 0.5)) {
-        const n = mazeNeighbor(walls, rows, cols, r, c, d);
-        if (!n) continue;
-        // 골인 칸은 마지막 스텝에서만 진입 가능하게 제한
-        if (n.r === end.r && n.c === end.c && path.length + 1 < need) continue;
-        if (path.some((p) => p.r === n.r && p.c === n.c)) continue;
-        path.push(n);
-        dfs(n.r, n.c, path);
-        path.pop();
-        if (found) return;
-      }
-    }
-    dfs(start.r, start.c, [{ r: start.r, c: start.c }]);
-    return found;
-  }
-
+  // 정통형 월간 미로: 복잡한 벽 구조 + 매일 1칸 전진, 말일 골인 보장.
   function buildMonthMaze(mk, total) {
-    const seed = hashMk(mk);
     const rows = 13;
     const cols = 13;
     const start = { r: Math.floor(rows / 2), c: 0 };
-    const end = { r: Math.floor(rows / 2), c: cols - 1 };
-    for (let attempt = 0; attempt < 60; attempt++) {
-      const s = seed + attempt * 131;
-      const walls = carveFullMaze(rows, cols, s);
-      walls[start.r][start.c].w = false;
-      walls[end.r][end.c].e = false;
-      const path = findQuestPath(walls, rows, cols, start, end, total, s);
-      if (path && path.length === total + 1) {
-        return {
-          version: 5,
-          rows,
-          cols,
-          walls,
-          path,
-          pathSet: new Set(path.map((p) => cellKey(p.r, p.c))),
-          start,
-          exit: end,
-        };
+    const needSteps = total;
+    const baseSeed = hashMk(mk) + total * 17;
+    const parseKey = (k) => {
+      const [r, c] = k.split(",").map((v) => Number(v));
+      return { r, c };
+    };
+    const openBetween = (walls, a, b) => {
+      const d = b.r < a.r ? "n" : b.r > a.r ? "s" : b.c > a.c ? "e" : "w";
+      walls[a.r][a.c][d] = false;
+      walls[b.r][b.c][oppositeDir(d)] = false;
+    };
+    const neighborByOpenWall = (walls, cell) =>
+      gridNeighbors(rows, cols, cell.r, cell.c).filter((n) => !walls[cell.r][cell.c][n.d]);
+
+    let walls = null;
+    let path = null;
+    let end = null;
+
+    for (let attempt = 0; attempt < 96; attempt++) {
+      const rng = seededRng(baseSeed + attempt * 101);
+      const tryWalls = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => ({ n: true, e: true, s: true, w: true }))
+      );
+
+      // 1) DFS 백트래킹으로 "진짜 미로"(perfect maze) 생성
+      const stack = [start];
+      const visited = new Set([cellKey(start.r, start.c)]);
+      while (stack.length) {
+        const cur = stack[stack.length - 1];
+        const nexts = gridNeighbors(rows, cols, cur.r, cur.c)
+          .filter((n) => !visited.has(cellKey(n.r, n.c)))
+          .sort(() => rng() - 0.5);
+        if (!nexts.length) {
+          stack.pop();
+          continue;
+        }
+        const nxt = nexts[0];
+        openBetween(tryWalls, cur, nxt);
+        visited.add(cellKey(nxt.r, nxt.c));
+        stack.push({ r: nxt.r, c: nxt.c });
       }
+
+      // 2) 시작점으로부터 최단거리 BFS (perfect maze라 실제 유일 경로 길이와 동일)
+      const q = [start];
+      const dist = new Map([[cellKey(start.r, start.c), 0]]);
+      const prev = new Map();
+      for (let qi = 0; qi < q.length; qi++) {
+        const cur = q[qi];
+        const curKey = cellKey(cur.r, cur.c);
+        const curDist = dist.get(curKey) || 0;
+        neighborByOpenWall(tryWalls, cur).forEach((n) => {
+          const nk = cellKey(n.r, n.c);
+          if (dist.has(nk)) return;
+          dist.set(nk, curDist + 1);
+          prev.set(nk, curKey);
+          q.push({ r: n.r, c: n.c });
+        });
+      }
+
+      const candidates = [];
+      dist.forEach((d, k) => {
+        if (d === needSteps) candidates.push(k);
+      });
+      if (!candidates.length) continue;
+
+      const pickedKey = candidates[Math.floor(rng() * candidates.length)];
+      const rev = [];
+      let walk = pickedKey;
+      while (walk) {
+        rev.push(parseKey(walk));
+        walk = prev.get(walk);
+      }
+      rev.reverse();
+      if (rev.length !== needSteps + 1) continue;
+
+      walls = tryWalls;
+      path = rev;
+      end = { ...rev[rev.length - 1] };
+      break;
     }
-    const walls = carveFullMaze(rows, cols, seed + 999);
+
+    // 드문 경우 exact 길이를 못 찾으면 안전 폴백(앱 진입 안정성 보장)
+    if (!walls || !path || !end) {
+      walls = Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => ({ n: true, e: true, s: true, w: true }))
+      );
+      const snake = [];
+      for (let r = 0; r < rows; r++) {
+        const order = r % 2 === 0 ? [...Array(cols).keys()] : [...Array(cols).keys()].reverse();
+        order.forEach((c) => snake.push({ r, c }));
+      }
+      const sIdx = snake.findIndex((p) => p.r === start.r && p.c === start.c);
+      path = snake.slice(sIdx, sIdx + needSteps + 1);
+      while (path.length < needSteps + 1) path.push({ ...path[path.length - 1] });
+      end = { ...path[path.length - 1] };
+      for (let i = 0; i < path.length - 1; i++) openBetween(walls, path[i], path[i + 1]);
+    }
+
     walls[start.r][start.c].w = false;
     walls[end.r][end.c].e = false;
-    let path = findQuestPath(walls, rows, cols, start, end, total, seed + 999);
-    if (!path) {
-      path = [start];
-      while (path.length < total + 1) {
-        const cur = path[path.length - 1];
-        const n = mazeNeighbor(walls, rows, cols, cur.r, cur.c, "e") || end;
-        path.push({ r: n.r, c: n.c });
-      }
-      path[path.length - 1] = { ...end };
-    }
+
     return {
-      version: 5,
+      version: 7,
       rows,
       cols,
       walls,
-      path: path.slice(0, total + 1),
-      pathSet: new Set(path.slice(0, total + 1).map((p) => cellKey(p.r, p.c))),
+      path,
+      pathSet: new Set(path.map((p) => cellKey(p.r, p.c))),
       start,
       exit: end,
     };
@@ -1319,7 +1338,7 @@
       delete p.revealed;
     }
     if (p.moves == null) p.moves = 0;
-    if (!p.maze || p.maze.version !== 5) p.maze = buildMonthMaze(mk, dayTotal);
+    if (!p.maze || p.maze.version !== 7) p.maze = buildMonthMaze(mk, dayTotal);
     if (!p.bombs) p.bombs = [];
     if (p.moves >= p.total) {
       p.moves = p.total;
@@ -2695,10 +2714,11 @@
     }
     state.questRewardYmd = d;
     state.coins += 100;
+    revealPuzzleLetter(monthKey());
     state.attendance[d] = true;
     updateStreakForActivity(d);
     tryClaimMilestones();
-    toast("일일 퀘스트 100%! 코인 +100 · 출석 🎉");
+    toast("일일 퀘스트 100%! 코인 +100 · 미로 1칸 · 출석 🎉");
     save();
     renderQuestBlocks();
     renderHomeStats();
