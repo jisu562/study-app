@@ -142,6 +142,37 @@
       background: linear-gradient(135deg, var(--lav), var(--pink));
       border-color: transparent;
     }
+    .qblock.bomb {
+      background: #fff5f7;
+      border-color: #ffc9d8;
+      position: relative;
+    }
+    .qblock.bomb::after {
+      content: "💣";
+      font-size: 0.55rem;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .qblock.bomb.on {
+      background: linear-gradient(135deg, #ffb3c8, var(--pink-deep));
+      border-color: transparent;
+    }
+    .maze-bomb-btn {
+      width: 100%;
+      margin-top: 8px;
+      font-size: 0.85rem;
+    }
+    .maze-bombs-hint {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--pink-deep);
+      font-weight: 700;
+      line-height: 1.45;
+    }
     /* Bottom nav */
     .tabbar {
       position: fixed;
@@ -247,7 +278,56 @@
       min-height: 220px;
     }
     .jp-big { font-size: 1.65rem; font-weight: 700; margin: 8px 0; line-height: 1.35; }
-    .stars { color: #ffc24a; letter-spacing: 2px; font-size: 0.95rem; }
+    .bombs { letter-spacing: 2px; font-size: 0.95rem; }
+    .quote-puzzle {
+      background: linear-gradient(160deg, #faf7ff, #fff8fb);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 2px solid #ece6ff;
+      text-align: center;
+      line-height: 1.8;
+    }
+    .quote-jp {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      min-height: 2.2em;
+      word-break: keep-all;
+    }
+    .quote-jp .hidden-char { color: #c9bddb; }
+    .maze-wrap {
+      margin: 0 auto;
+      max-width: 300px;
+      padding: 4px;
+    }
+    .maze-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 3px solid #1a1a1a;
+      box-shadow: 4px 4px 0 #7a68a8;
+    }
+    .maze-prog {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--lav-dark);
+      text-align: center;
+    }
+    .quote-kr {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--lav-dark);
+    }
+    .quote-complete {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--mint-dark);
+      font-weight: 700;
+    }
+    .stat-accuracy { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 2px; }
     .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
     .choice {
       padding: 12px 14px;
@@ -287,6 +367,9 @@
     }
     .flip-back { transform: rotateY(180deg); background: #fff8fb; }
     .flip-front { background: #f4fffb; }
+    .flip-inner.locked { pointer-events: none; }
+    .result-msg.ok { color: var(--mint-dark); font-weight: 700; }
+    .result-msg.ng { color: var(--pink-deep); font-weight: 700; }
     input.text-in {
       width: 100%;
       padding: 12px 14px;
@@ -335,26 +418,11 @@
     }
     .cal-cell.today { border-color: var(--lav-dark); box-shadow: 0 0 0 2px rgba(155, 125, 255, 0.2); }
     .cal-cell.done { background: linear-gradient(160deg, #d9fff2, #ffe6f2); }
-    .puzzle-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
-      margin-top: 10px;
-    }
-    .pcell {
-      aspect-ratio: 1;
-      border-radius: 8px;
-      background: #e8e3f0;
-      border: 1px dashed #c9bddb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-    }
-    .pcell.filled {
-      background: linear-gradient(135deg, var(--mint), var(--lav));
-      border-style: solid;
-      border-color: transparent;
+    .cal-cell.selected { outline: 2px solid var(--pink-deep); }
+    .puzzle-month-label {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--lav-dark);
     }
     .level-select {
       display: flex;
@@ -381,6 +449,265 @@
     }
     .v-item h3 { margin: 0 0 4px; font-size: 1rem; }
     .tag { font-size: 0.75rem; color: var(--muted); }
+    .studied-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .studied-card {
+      perspective: 800px;
+      min-height: 88px;
+      cursor: pointer;
+      outline: none;
+    }
+    .studied-card:focus-visible { outline: 2px solid var(--lav-dark); border-radius: 12px; }
+    .studied-inner {
+      position: relative;
+      width: 100%;
+      min-height: 88px;
+      transition: transform 0.45s;
+      transform-style: preserve-3d;
+    }
+    .studied-inner.flipped { transform: rotateY(180deg); }
+    .studied-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid #ece6ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+    .studied-front { background: #f4fffb; font-weight: 700; }
+    .studied-back { transform: rotateY(180deg); background: #fff8fb; color: var(--lav-dark); font-weight: 600; }
+    .studied-src { font-size: 0.72rem; color: var(--muted); margin-top: 4px; font-weight: 500; }
+    .learn-quote {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f4fffb, #faf7ff);
+      border-left: 4px solid var(--mint-dark);
+    }
+    .learn-quote .quote-jp-line { font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; }
+    .learn-quote .quote-kr-line { color: var(--lav-dark); font-weight: 600; }
+    .catalog-layout {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .catalog-cats {
+      flex: 0 0 36%;
+      max-width: 168px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 300px;
+      padding-right: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .catalog-cats::-webkit-scrollbar { width: 4px; }
+    .catalog-main { flex: 1; min-width: 0; }
+    .catalog-cat {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ece6ff;
+      background: #fff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: normal;
+    }
+    .catalog-cat.on {
+      background: var(--lav);
+      border-color: var(--lav-dark);
+      color: #3d2a52;
+    }
+    .catalog-slides {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 0;
+      padding: 0 0 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .catalog-slides::-webkit-scrollbar { height: 4px; }
+    .catalog-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: start;
+      box-sizing: border-box;
+      padding: 0 2px;
+      outline: none;
+    }
+    .catalog-slide:focus-visible { outline: 2px solid var(--lav-dark); border-radius: 14px; }
+    .catalog-card-area {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-height: min(78vw, 300px);
+      max-height: min(85vw, 340px);
+      aspect-ratio: 1;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .catalog-slide .studied-card {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      height: auto;
+    }
+    .catalog-slide .studied-inner,
+    .catalog-slide .studied-face {
+      min-height: 100%;
+    }
+    .catalog-slide .studied-face {
+      padding: 16px 12px;
+      align-items: center;
+      text-align: center;
+    }
+    .catalog-jp {
+      font-size: clamp(1.4rem, 7vw, 2rem);
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+      width: 100%;
+    }
+    .catalog-reading {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+    .catalog-hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 6px;
+    }
+    .catalog-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .catalog-nav button { flex: 0 0 auto; padding: 8px 14px; }
+    .catalog-prog { font-weight: 800; font-size: 0.9rem; }
+    .mascot-shop {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mascot-tier-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mascot-tier {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 4px;
+      flex: 1 1 calc(33.333% - 6px);
+      min-width: 92px;
+      max-width: calc(33.333% - 6px);
+      padding: 8px 6px 10px;
+      border-radius: 12px;
+      border: 1px solid #ece6ff;
+      background: #faf7ff;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .mascot-tier.owned { border-color: var(--mint-dark); background: #f4fffb; }
+    .mascot-tier.active { outline: 2px solid var(--lav-dark); }
+    .mascot-tier-preview { font-size: 1.65rem; line-height: 1; }
+    .mascot-tier-info { width: 100%; min-width: 0; }
+    .mascot-tier-info strong { display: block; font-size: 0.8rem; line-height: 1.2; }
+    .mascot-tier-info span { display: block; font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .mascot-tier button {
+      width: 100%;
+      margin-top: 2px;
+      padding: 6px 4px;
+      font-size: 0.72rem;
+    }
+    .mascot-tier-label {
+      width: 100%;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--muted);
+      margin: 10px 0 6px;
+      padding-top: 10px;
+      border-top: 1px solid #ece6ff;
+    }
+    .mascot-shop > .mascot-tier-grid:first-child + .mascot-tier-label {
+      margin-top: 8px;
+    }
+    .trend-graph-wrap {
+      margin-top: 10px;
+      border: 1px solid #ece6ff;
+      border-radius: 12px;
+      background: #faf7ff;
+      padding: 10px;
+    }
+    .trend-mode {
+      display: inline-flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .trend-mode button {
+      border: 1px solid #ddd6f7;
+      background: #fff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .trend-mode button.on {
+      background: #efe9ff;
+      color: var(--lav-dark);
+      border-color: #cfc0f7;
+    }
+    .trend-graph-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .trend-legend { display: flex; gap: 10px; align-items: center; font-size: 0.75rem; }
+    .trend-legend i { width: 10px; height: 2px; display: inline-block; border-radius: 999px; }
+    .trend-legend .vocab i { background: #8b5cf6; }
+    .trend-legend .learn i { background: #ec4899; }
+    .trend-graph-wrap svg { width: 100%; height: auto; display: block; }
+    .trend-foot { margin-top: 6px; font-size: 0.72rem; color: var(--muted); }
+    .cal-reward-small {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #ece6ff;
+      font-size: 0.74rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .cal-reward-small strong { color: #6a5f80; font-size: 0.76rem; }
+    .catalog-listen {
+      margin-top: 10px;
+      text-align: center;
+    }
+    .catalog-listen button { width: 100%; max-width: 220px; }
   </style>
 </head>
 <body>
@@ -395,26 +722,12 @@
 
     <!-- HOME -->
     <section id="screen-home" class="screen active">
-      <div class="card track-wrap">
-        <div class="row between">
-          <span class="pill">🏃 오늘의 마스코트</span>
-          <span class="muted" id="distLine">0m 달림</span>
-        </div>
-        <div class="track-line">
-          <span class="mascot" id="mascotEmoji">🐰</span>
-          <div class="track" aria-hidden="true"><div class="track-fill" id="trackFill"></div></div>
-          <span class="finish">🏁</span>
-        </div>
-        <p style="margin:10px 0 0;font-weight:800;font-size:1.05rem;"><span id="streakDisplay">0</span>일 연속 출석</p>
-        <p class="muted" style="margin:4px 0 0;">1문제 = 1m · 월간 거리는 캘린더에서 확인</p>
-      </div>
-
       <div class="card">
         <div class="row between">
           <h2>오늘의 학습</h2>
           <button class="secondary" id="btnDailyQuest">일일 퀘스트 시작</button>
         </div>
-        <p class="muted">하루 10문제 · 레벨에 맞춰 자동 구성 · 완료 시 코인·퍼즐·출석 반영</p>
+        <p class="muted" id="dailyQuestHint">하루 10문제만 · 100% 완료 시 코인 +100 · 출석</p>
       </div>
 
       <div class="card">
@@ -423,16 +736,13 @@
           <span class="pill" id="questPercent">0%</span>
         </div>
         <div class="quest-blocks" id="questBlocks" aria-label="퀘스트 진행도"></div>
-        <p class="muted" style="margin-top:8px;">□□□□□□□□□□ → ■■■■■□□□□□ → 완료!</p>
+        <p class="muted" style="margin-top:8px;" id="questStatusLine">오늘 0/10</p>
       </div>
 
       <div class="card">
-        <h2>빠른 기록</h2>
-        <div class="row" style="gap:12px;">
-          <div><div class="muted">이번 달 문제</div><strong id="monthQs">0</strong></div>
-          <div><div class="muted">오늘 맞춘 수</div><strong id="todayCorrect">0</strong></div>
-          <div><div class="muted">복습 대기</div><strong id="reviewCount">0</strong></div>
-        </div>
+        <h2 style="margin:0 0 6px">이번 달 명언 미로</h2>
+        <p class="puzzle-month-label" id="homePuzzleMonth"></p>
+        <div class="quote-puzzle" id="homeQuotePuzzle"></div>
       </div>
 
       <div class="card">
@@ -447,27 +757,32 @@
         <p class="muted">레벨에 따라 퀘스트·추천 혼합 문제 구성이 달라집니다.</p>
       </div>
 
-      <div class="card">
-        <p class="muted" style="margin:0;line-height:1.55;">출석 기록과 퍼즐 1칸은 <strong>일일 퀘스트 10문제를 모두 끝냈을 때</strong> 자동으로 채워져요. (별도 출석 버튼 없음)</p>
-      </div>
     </section>
 
     <!-- LEARN -->
     <section id="screen-learn" class="screen">
       <div class="card">
         <h2>학습</h2>
-        <p class="muted">카테고리 → 개별 / 선택(혼합) 학습 · 카드 슬라이드 · 입력 최소화</p>
+        <div class="learn-quote" id="learnDailyQuote" aria-live="polite"></div>
       </div>
       <div id="learnAccRoot"></div>
     </section>
 
     <!-- VOCAB -->
     <section id="screen-vocab" class="screen">
-      <div class="card row between">
-        <h2 style="margin:0">단어장</h2>
-        <button class="secondary" id="btnNewBook">+ 새 단어장</button>
+      <div class="card">
+        <h2 style="margin:0">전체 단어·문장</h2>
+        <p class="muted">왼쪽 주제 선택 · Enter 뜻 → Enter 다음 · ▶ 듣기</p>
+        <div id="wordCatalog"></div>
       </div>
-      <div id="vocabList"></div>
+      <div class="card">
+        <div class="row between">
+          <h2 style="margin:0">내 단어장</h2>
+          <button class="secondary" id="btnNewBook">+ 새 단어장</button>
+        </div>
+        <p class="muted" style="margin:4px 0 10px;">직접 추가한 단어·문장 · 관리</p>
+        <div id="vocabList"></div>
+      </div>
     </section>
 
     <!-- CALENDAR -->
@@ -480,26 +795,17 @@
         </div>
         <div class="cal-grid" id="calWeek"></div>
         <div class="cal-grid" id="calDays"></div>
-        <p class="muted" style="margin-top:10px;">● 일일 퀘스트 완료한 날 · 오늘은 테두리</p>
+        <div id="calTrend"></div>
+        <div class="cal-reward-small">
+          <strong>연속 출석 보상</strong><br />
+          3일 10코인 · 7일 20코인 · 14일 30코인 · 30일 40코인<br />
+          합계 최대 100코인 · 연속 출석 달성 시 자동 지급
+        </div>
       </div>
       <div class="card">
-        <h2>이번 달 퍼즐</h2>
-        <p class="muted">일일 퀘스트 완료로 1칸씩 · 완성 시 배경·마스코트 꾸미기·칭호(데모)</p>
-        <div class="puzzle-grid" id="puzzleGrid"></div>
-        <p style="margin-top:10px;font-weight:700;"><span id="puzzleProg"></span></p>
-        <button class="secondary" id="btnRepair" type="button">🪙 100코인으로 빈 칸 1개 복구</button>
-        <p class="muted" style="margin-top:6px;">결석 스트레스 완화용 · 꾸준함 유지</p>
-      </div>
-      <div class="card">
-        <h2>연속 출석 보상</h2>
-        <ul class="muted" style="margin:0;padding-left:18px;line-height:1.6;">
-          <li>3일 → 10코인</li>
-          <li>7일 → 20코인</li>
-          <li>14일 → 30코인</li>
-          <li>연속 30일 → 40코인</li>
-        </ul>
-        <p class="muted">합계 최대 100코인 · 아래에서 수령</p>
-        <div id="milestoneBox"></div>
+        <h2 style="margin-top:0;">마스코트 상점</h2>
+        <p class="muted" style="margin:0 0 10px;">코인으로 트랙 달리기 이모지를 바꿔요 · 20 / 50 / 100코인</p>
+        <div class="mascot-shop" id="mascotShop"></div>
       </div>
     </section>
   </div>
@@ -521,7 +827,7 @@
       <div class="slides" id="slides"></div>
       <div class="row between" style="margin-top:8px;">
         <button class="secondary" id="btnWrong" type="button">오답 처리</button>
-        <button id="btnNextSlide" type="button">다음 카드 →</button>
+        <button id="btnNextSlide" type="button">다음 카드 → (Enter)</button>
       </div>
     </div>
   </div>
@@ -546,18 +852,52 @@
     lastActiveYmd: "",
     questYmd: "",
     questDone: 0,
+    questRewardYmd: "",
     totalAnswered: 0,
-    monthAnswered: {}, // "2026-5" -> n
-    attendance: {}, // ymd -> true
-    puzzleFilled: 0,
-    puzzleMonth: "",
+    monthAnswered: {},
+    monthCorrect: {},
+    dailyStatsYmd: "",
+    dailyAnswered: 0,
+    dailyCorrect: 0,
+    practiceStatsYmd: "",
+    practiceAnswered: 0,
+    practiceCorrect: 0,
+    attendance: {},
+    puzzlesByMonth: {},
     milestones: { d3: false, d7: false, d14: false, d30: false },
-    stars: {}, // id -> 0-5
+    bombs: {},
     wrongToday: [],
+    wrongTodayYmd: "",
+    wrongTodayItems: {},
     wrongCount: {},
     vocabBooks: [],
+    studiedLog: [],
+    studyTrendByYmd: {},
+    mascot: { active: "🐰", owned: ["🐰"] },
     cosmetics: { title: "", bg: "" },
   });
+
+  const DEFAULT_MASCOT = "🐰";
+  const MASCOT_SHOP = [
+    { emoji: "🐱", price: 20, name: "냥이" },
+    { emoji: "🐻", price: 20, name: "곰" },
+    { emoji: "🐼", price: 20, name: "판다" },
+    { emoji: "🐹", price: 20, name: "햄스터" },
+    { emoji: "🐶", price: 20, name: "강아지" },
+    { emoji: "🐥", price: 20, name: "병아리" },
+    { emoji: "🦊", price: 50, name: "여우" },
+    { emoji: "🐸", price: 50, name: "개구리" },
+    { emoji: "🐧", price: 50, name: "펭귄" },
+    { emoji: "🐨", price: 50, name: "코알라" },
+    { emoji: "🦝", price: 50, name: "너구리" },
+    { emoji: "🐙", price: 50, name: "문어" },
+    { emoji: "🐉", price: 100, name: "용" },
+    { emoji: "🦄", price: 100, name: "유니콘" },
+    { emoji: "👾", price: 100, name: "외계인" },
+    { emoji: "🤖", price: 100, name: "로봇" },
+    { emoji: "🦋", price: 100, name: "나비" },
+    { emoji: "🌟", price: 100, name: "별" },
+  ];
 
   let state = load();
 
@@ -565,10 +905,116 @@
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (!raw) return defaultState();
-      return { ...defaultState(), ...JSON.parse(raw) };
+      const s = { ...defaultState(), ...JSON.parse(raw) };
+      if (s.stars && Object.keys(s.bombs || {}).length === 0) s.bombs = { ...s.stars };
+      delete s.stars;
+      if (s.puzzleMonth && s.puzzleFilled != null && !s.puzzlesByMonth?.[s.puzzleMonth]) {
+        s.puzzlesByMonth = s.puzzlesByMonth || {};
+        const q = quoteForMonth(s.puzzleMonth);
+        const [py, pm] = s.puzzleMonth.split("-").map(Number);
+        const days = new Date(py, pm, 0).getDate();
+        s.puzzlesByMonth[s.puzzleMonth] = {
+          moves: Math.min(s.puzzleFilled, days),
+          total: days,
+          quote: q,
+          completed: s.puzzleFilled >= days,
+        };
+      }
+      if (!s.mascot?.owned?.length) {
+        s.mascot = { active: DEFAULT_MASCOT, owned: [DEFAULT_MASCOT] };
+      }
+      if (!s.mascot.owned.includes(DEFAULT_MASCOT)) s.mascot.owned.unshift(DEFAULT_MASCOT);
+      if (!s.mascot.owned.includes(s.mascot.active)) s.mascot.active = DEFAULT_MASCOT;
+      if (!s.wrongTodayItems) s.wrongTodayItems = {};
+      if (!s.wrongTodayYmd) s.wrongTodayYmd = ymd();
+      normalizeBombKeys(s);
+      return s;
     } catch {
       return defaultState();
     }
+  }
+
+  function ensureMascot() {
+    if (!state.mascot) state.mascot = { active: DEFAULT_MASCOT, owned: [DEFAULT_MASCOT] };
+    if (!state.mascot.owned.includes(DEFAULT_MASCOT)) state.mascot.owned.unshift(DEFAULT_MASCOT);
+  }
+
+  function applyMascotDisplay() {
+    ensureMascot();
+    const el = document.getElementById("mascotEmoji");
+    if (el) el.textContent = state.mascot.active || DEFAULT_MASCOT;
+  }
+
+  function buyOrEquipMascot(emoji, price) {
+    ensureMascot();
+    const owned = state.mascot.owned;
+    if (owned.includes(emoji)) {
+      state.mascot.active = emoji;
+      save();
+      applyMascotDisplay();
+      renderMascotShop();
+      toast(`${emoji} 마스코트 장착!`);
+      return;
+    }
+    if ((state.coins || 0) < price) {
+      toast(`코인이 부족해요 (${price} 필요)`);
+      return;
+    }
+    state.coins -= price;
+    owned.push(emoji);
+    state.mascot.active = emoji;
+    save();
+    applyMascotDisplay();
+    renderMascotShop();
+    renderHomeStats();
+    toast(`${emoji} 구매 완료! 장착했어요`);
+  }
+
+  function appendMascotRow(box, m) {
+    const has = state.mascot.owned.includes(m.emoji);
+    const row = document.createElement("div");
+    row.className = "mascot-tier" + (has ? " owned" : "") + (state.mascot.active === m.emoji ? " active" : "");
+    const sub = has ? "보유 중" : "";
+    row.innerHTML = `<span class="mascot-tier-preview">${m.emoji}</span>
+      <div class="mascot-tier-info"><strong>${escapeHtml(m.name)}</strong>${sub ? `<span>${sub}</span>` : ""}</div>`;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    if (state.mascot.active === m.emoji) {
+      btn.className = "secondary";
+      btn.textContent = "착용 중";
+      btn.disabled = true;
+    } else if (has) {
+      btn.textContent = "착용";
+      btn.addEventListener("click", () => buyOrEquipMascot(m.emoji, m.price));
+    } else {
+      btn.textContent = m.price ? "구매" : "착용";
+      btn.addEventListener("click", () => buyOrEquipMascot(m.emoji, m.price));
+    }
+    row.appendChild(btn);
+    box.appendChild(row);
+  }
+
+  function renderMascotShop() {
+    const box = document.getElementById("mascotShop");
+    if (!box) return;
+    ensureMascot();
+    box.innerHTML = "";
+    const defaultGrid = document.createElement("div");
+    defaultGrid.className = "mascot-tier-grid";
+    appendMascotRow(defaultGrid, { emoji: DEFAULT_MASCOT, price: 0, name: "토끼 (기본)" });
+    box.appendChild(defaultGrid);
+    [20, 50, 100].forEach((price) => {
+      const list = MASCOT_SHOP.filter((m) => m.price === price);
+      if (!list.length) return;
+      const lab = document.createElement("p");
+      lab.className = "mascot-tier-label";
+      lab.textContent = `${price}코인`;
+      box.appendChild(lab);
+      const grid = document.createElement("div");
+      grid.className = "mascot-tier-grid";
+      list.forEach((m) => appendMascotRow(grid, m));
+      box.appendChild(grid);
+    });
   }
 
   function save() {
@@ -582,6 +1028,27 @@
 
   function monthKey(d = new Date()) {
     return `${d.getFullYear()}-${d.getMonth() + 1}`;
+  }
+
+  function daysInMonth(d = new Date()) {
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  }
+
+  function monthAttendanceCount(d = new Date()) {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const prefix = `${y}-${m}-`;
+    let n = 0;
+    for (const k of Object.keys(state.attendance || {})) {
+      if (k.startsWith(prefix) && state.attendance[k]) n++;
+    }
+    return n;
+  }
+
+  function monthTrackProgress(d = new Date()) {
+    const total = daysInMonth(d);
+    const count = monthAttendanceCount(d);
+    return { count, total, pct: total ? Math.min(100, (count / total) * 100) : 0 };
   }
 
   function toast(msg) {
@@ -606,7 +1073,8 @@
     return String(s || "")
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, "");
+      .replace(/\s+/g, "")
+      .replace(/[.,!?~'"…·]/g, "");
   }
 
   function checkAnswers(input, accepted) {
@@ -615,27 +1083,559 @@
     const list = Array.isArray(accepted) ? accepted : [accepted];
     return list.some((a) => {
       const parts = String(a).split("|").map(normalizeAns);
-      return parts.some((p) => p && n === p);
+      return parts.some((p) => {
+        if (!p) return false;
+        if (n === p) return true;
+        if (p.length >= 2 && n.length >= 2 && (p.includes(n) || n.includes(p))) return true;
+        return false;
+      });
     });
+  }
+
+  const MONTH_QUOTES = [
+    { jp: "継続は力なり", kr: "꾸준함이 힘이다" },
+    { jp: "七転び八起き", kr: "일곱 번 넘어져도 여덟 번 일어선다" },
+    { jp: "一期一会", kr: "한 번의 만남도 소중하게" },
+    { jp: "千里の道も一歩から", kr: "천 리 길도 한 걸음부터" },
+    { jp: "塵も積もれば山となる", kr: "티끌 모아 태산이 된다" },
+    { jp: "笑う門には福来る", kr: "웃는 집에 복이 온다" },
+    { jp: "案ずるより産むが易し", kr: "걱정보다 실행이 쉽다" },
+    { jp: "石の上にも三年", kr: "돌 위에도 세 살 앉으면 따뜻해진다" },
+    { jp: "失敗は成功のもと", kr: "실패는 성공의 어머니" },
+    { jp: "初心忘るべからず", kr: "초심을 잊지 말 것" },
+    { jp: "急がば回れ", kr: "서두르면 돌아가는 길이 낫다" },
+    { jp: "花より団子", kr: "꽃보다 실속" },
+  ];
+
+  const DAILY_QUOTES = [
+    ...MONTH_QUOTES,
+    { jp: "雨降って地固まる", kr: "비 온 뒤 땅이 굳어진다" },
+    { jp: "百聞は一見に如かず", kr: "백 번 듣는 것보다 한 번 보는 게 낫다" },
+    { jp: "三人寄れば文殊の知恵", kr: "셋이 모이면 지혜가 모인다" },
+    { jp: "能ある鷹は爪を隠す", kr: "능력 있는 매는 발톱을 숨긴다" },
+    { jp: "井の中の蛙", kr: "우물 안 개구리" },
+    { jp: "灯台下暗し", kr: "등대 아래가 어둡다" },
+    { jp: "二兎を追う者は一兎をも得ず", kr: "두 마리 토끼를 쫓으면 한 마리도 못 잡는다" },
+    { jp: "猿も木から落ちる", kr: "원숭이도 나무에서 떨어진다" },
+    { jp: "郷に入っては郷に従え", kr: "마을에 들어가면 마을 법을 따르라" },
+    { jp: "花鳥風月", kr: "꽃·새·바람·달 — 자연의 아름다움" },
+    { jp: "温故知新", kr: "옛것을 익혀 새것을 안다" },
+    { jp: "自ら火の粉を取る", kr: "스스로 불씨를 찾다" },
+    { jp: "十人十色", kr: "열 사람 열 색" },
+    { jp: "時は金なり", kr: "시간은 금이다" },
+    { jp: "良薬は口に苦し", kr: "좋은 약은 입에 쓰다" },
+    { jp: "柳に風", kr: "버드나무에 바람 — 흘러간다" },
+    { jp: "馬の耳に念仏", kr: "말 귀에 염불" },
+    { jp: "猫に小判", kr: "고양이에게 금화" },
+    { jp: "早起きは三文の徳", kr: "일찍 일어나면 이익이 있다" },
+    { jp: "出る釘は打たれる", kr: "나오는 못은 맞는다" },
+  ];
+
+  function quoteForMonth(mk) {
+    let h = 0;
+    for (let i = 0; i < mk.length; i++) h = (h + mk.charCodeAt(i) * 17) % MONTH_QUOTES.length;
+    return MONTH_QUOTES[h];
+  }
+
+  function quoteForDay(d = new Date()) {
+    const start = new Date(d.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((d - start) / 86400000);
+    return DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
+  }
+
+  function renderLearnDailyQuote() {
+    const el = document.getElementById("learnDailyQuote");
+    if (!el) return;
+    const d = new Date();
+    const q = quoteForDay(d);
+    const wk = ["일", "월", "화", "수", "목", "금", "토"];
+    const tag = `${d.getMonth() + 1}/${d.getDate()} (${wk[d.getDay()]}) 오늘의 한 줄`;
+    el.innerHTML = `<div class="muted" style="font-size:0.75rem;margin-bottom:6px;">${tag}</div>
+      <div class="quote-jp-line">${escapeHtml(q.jp)}</div>
+      <div class="quote-kr-line">${escapeHtml(q.kr)}</div>`;
+  }
+
+  function puzzleChars(jp) {
+    return [...jp].filter((c) => c !== " " && c !== "　");
+  }
+
+  function daysInMonthFromKey(mk) {
+    const [y, m] = mk.split("-").map(Number);
+    return new Date(y, m, 0).getDate();
+  }
+
+  function hashMk(mk) {
+    let h = 0;
+    for (let i = 0; i < mk.length; i++) h = (h * 31 + mk.charCodeAt(i)) | 0;
+    return Math.abs(h) || 1;
+  }
+
+  function seededRng(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 1103515245 + 12345) & 0x7fffffff;
+      return s / 0x7fffffff;
+    };
+  }
+
+  function cellKey(r, c) {
+    return `${r},${c}`;
+  }
+
+  function carveFullMaze(rows, cols, seed) {
+    const rng = seededRng(seed);
+    const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+    const walls = Array.from({ length: rows }, () =>
+      Array.from({ length: cols }, () => ({ n: true, e: true, s: true, w: true }))
+    );
+    function carve(r, c) {
+      visited[r][c] = true;
+      const dirs = [
+        [-1, 0, "n", "s"],
+        [0, 1, "e", "w"],
+        [1, 0, "s", "n"],
+        [0, -1, "w", "e"],
+      ].sort(() => rng() - 0.5);
+      for (const [dr, dc, w1, w2] of dirs) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
+          walls[r][c][w1] = false;
+          walls[nr][nc][w2] = false;
+          carve(nr, nc);
+        }
+      }
+    }
+    carve(0, 0);
+    return walls;
+  }
+
+  function mazeNeighbor(walls, rows, cols, r, c, dir) {
+    const w = walls[r][c];
+    if (dir === "n" && !w.n && r > 0) return { r: r - 1, c };
+    if (dir === "e" && !w.e && c < cols - 1) return { r, c: c + 1 };
+    if (dir === "s" && !w.s && r < rows - 1) return { r: r + 1, c };
+    if (dir === "w" && !w.w && c > 0) return { r, c: c - 1 };
+    return null;
+  }
+
+  function findQuestPath(walls, rows, cols, start, end, total, seed) {
+    const rng = seededRng(seed + 77);
+    const need = total + 1;
+    let found = null;
+    function dfs(r, c, path) {
+      if (found) return;
+      if (path.length > need) return;
+      if (path.length === need && r === end.r && c === end.c) {
+        found = path.map((p) => ({ r: p.r, c: p.c }));
+        return;
+      }
+      if (path.length >= need) return;
+      for (const d of ["n", "e", "s", "w"].sort(() => rng() - 0.5)) {
+        const n = mazeNeighbor(walls, rows, cols, r, c, d);
+        if (!n) continue;
+        if (path.some((p) => p.r === n.r && p.c === n.c)) continue;
+        path.push(n);
+        dfs(n.r, n.c, path);
+        path.pop();
+        if (found) return;
+      }
+    }
+    dfs(start.r, start.c, [{ r: start.r, c: start.c }]);
+    return found;
+  }
+
+  function buildMonthMaze(mk, total) {
+    const seed = hashMk(mk);
+    const rows = 13;
+    const cols = 13;
+    const start = { r: Math.floor(rows / 2), c: 0 };
+    const end = { r: Math.floor(rows / 2), c: cols - 1 };
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const s = seed + attempt * 131;
+      const walls = carveFullMaze(rows, cols, s);
+      walls[start.r][start.c].w = false;
+      walls[end.r][end.c].e = false;
+      const path = findQuestPath(walls, rows, cols, start, end, total, s);
+      if (path && path.length === total + 1) {
+        return {
+          version: 5,
+          rows,
+          cols,
+          walls,
+          path,
+          pathSet: new Set(path.map((p) => cellKey(p.r, p.c))),
+          start,
+          exit: end,
+        };
+      }
+    }
+    const walls = carveFullMaze(rows, cols, seed + 999);
+    walls[start.r][start.c].w = false;
+    walls[end.r][end.c].e = false;
+    let path = findQuestPath(walls, rows, cols, start, end, total, seed + 999);
+    if (!path) {
+      path = [start];
+      while (path.length < total + 1) {
+        const cur = path[path.length - 1];
+        const n = mazeNeighbor(walls, rows, cols, cur.r, cur.c, "e") || end;
+        path.push({ r: n.r, c: n.c });
+      }
+      path[path.length - 1] = { ...end };
+    }
+    return {
+      version: 5,
+      rows,
+      cols,
+      walls,
+      path: path.slice(0, total + 1),
+      pathSet: new Set(path.slice(0, total + 1).map((p) => cellKey(p.r, p.c))),
+      start,
+      exit: end,
+    };
+  }
+
+  function mazeWallLine(x1, y1, x2, y2, thick) {
+    const sh = 2.5;
+    return `<line x1="${x1 + sh}" y1="${y1 + sh}" x2="${x2 + sh}" y2="${y2 + sh}" stroke="#6b5a94" stroke-width="${thick}" stroke-linecap="square"/>
+      <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1a1a1a" stroke-width="${thick}" stroke-linecap="square"/>`;
+  }
+
+  function getPuzzleState(mk) {
+    if (!state.puzzlesByMonth) state.puzzlesByMonth = {};
+    const quote = quoteForMonth(mk);
+    const dayTotal = daysInMonthFromKey(mk);
+    if (!state.puzzlesByMonth[mk]) {
+      state.puzzlesByMonth[mk] = { moves: 0, total: dayTotal, quote, completed: false };
+    }
+    const p = state.puzzlesByMonth[mk];
+    p.quote = quote;
+    p.total = dayTotal;
+    if (p.revealed != null && p.moves == null) {
+      const chars = puzzleChars(quote.jp).length;
+      p.moves = chars ? Math.min(dayTotal, Math.round((p.revealed / chars) * dayTotal)) : 0;
+      delete p.revealed;
+    }
+    if (p.moves == null) p.moves = 0;
+    if (!p.maze || p.maze.version !== 5) p.maze = buildMonthMaze(mk, dayTotal);
+    if (!p.bombs) p.bombs = [];
+    if (p.moves >= p.total) {
+      p.moves = p.total;
+      p.completed = true;
+    }
+    return p;
+  }
+
+  function unclearedMazeBombs(p) {
+    return (p?.bombs || []).filter((b) => !b.cleared);
+  }
+
+  function addMazeBombForWrong(base) {
+    const mk = monthKey();
+    const p = getPuzzleState(mk);
+    if (p.bombs.some((b) => b.wrongId === base && !b.cleared)) return;
+    const used = new Set(p.bombs.filter((b) => !b.cleared).map((b) => b.pathIndex));
+    let pathIndex = -1;
+    for (let i = Math.max(1, p.moves + 1); i < p.maze.path.length; i++) {
+      if (!used.has(i)) {
+        pathIndex = i;
+        break;
+      }
+    }
+    if (pathIndex < 0) {
+      for (let i = 1; i < p.maze.path.length; i++) {
+        if (!used.has(i)) {
+          pathIndex = i;
+          break;
+        }
+      }
+    }
+    if (pathIndex >= 0) p.bombs.push({ wrongId: base, pathIndex, cleared: false });
+    save();
+  }
+
+  function clearMazeBomb(wrongId) {
+    const base = baseQuestionId(wrongId);
+    const p = getPuzzleState(monthKey());
+    const bomb = p.bombs.find((b) => b.wrongId === base && !b.cleared);
+    if (!bomb) return false;
+    bomb.cleared = true;
+    state.wrongToday = (state.wrongToday || []).filter((id) => id !== base);
+    delete state.wrongTodayItems[base];
+    save();
+    renderQuestBlocks();
+    renderHomeStats();
+    // 폭탄 제거는 전진이 아니라 길 정리만 한다.
+    tryGrantDailyQuestRewards();
+    toast("💣 제거! 복습 정답으로 미로가 열렸어요");
+    return true;
+  }
+
+  function hasBlockingMazeBomb(p) {
+    return unclearedMazeBombs(p).some((b) => b.pathIndex > p.moves);
+  }
+
+  function mazeEmoji(x, y, emoji, size) {
+    const s = size || 18;
+    return `<foreignObject x="${x - s / 2}" y="${y - s / 2}" width="${s}" height="${s}">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:${s}px;height:${s}px;display:flex;align-items:center;justify-content:center;font-size:${Math.round(s * 0.85)}px;line-height:1">${emoji}</div>
+    </foreignObject>`;
+  }
+
+  function renderMazeHtml(p) {
+    const { maze, moves, total } = p;
+    const pos = maze.path[Math.min(moves, maze.path.length - 1)];
+    const done = moves >= total;
+    const mascot = state.mascot?.active || "🐰";
+    const cs = 18;
+    const pad = 10;
+    const wt = 3.5;
+    const svgW = pad * 2 + maze.cols * cs;
+    const svgH = pad * 2 + maze.rows * cs;
+    let lines = "";
+    for (let r = 0; r < maze.rows; r++) {
+      for (let c = 0; c < maze.cols; c++) {
+        const x = pad + c * cs;
+        const y = pad + r * cs;
+        const w = maze.walls[r][c];
+        const openW = maze.start.r === r && maze.start.c === c;
+        const openE = maze.exit.r === r && maze.exit.c === c;
+        if (w.n) lines += mazeWallLine(x, y, x + cs, y, wt);
+        if (w.w && !openW) lines += mazeWallLine(x, y, x, y + cs, wt);
+        if (r === maze.rows - 1 && w.s) lines += mazeWallLine(x, y + cs, x + cs, y + cs, wt);
+        if (c === maze.cols - 1 && w.e && !openE) lines += mazeWallLine(x + cs, y, x + cs, y + cs, wt);
+      }
+    }
+    const top = pad;
+    const bottom = pad + maze.rows * cs;
+    const left = pad;
+    const right = pad + maze.cols * cs;
+    const entTop = pad + maze.start.r * cs;
+    const entBot = entTop + cs;
+    const exTop = pad + maze.exit.r * cs;
+    const exBot = exTop + cs;
+    lines += mazeWallLine(left, top, right, top, wt);
+    lines += mazeWallLine(left, top, left, entTop, wt);
+    lines += mazeWallLine(left, entBot, left, bottom, wt);
+    lines += mazeWallLine(right, top, right, exTop, wt);
+    lines += mazeWallLine(right, exBot, right, bottom, wt);
+    lines += mazeWallLine(left, bottom, right, bottom, wt);
+    const bombAt = new Map();
+    unclearedMazeBombs(p).forEach((b) => bombAt.set(b.pathIndex, b.wrongId));
+    let markers = "";
+    const startPt = maze.path[0];
+    const sx = pad + startPt.c * cs + cs / 2;
+    const sy = pad + startPt.r * cs + cs / 2;
+    markers += `<circle cx="${sx}" cy="${sy}" r="7" fill="#ffd54f" stroke="#c9a000" stroke-width="2"/>`;
+    if (moves === 0 && !done) markers += mazeEmoji(sx, sy, mascot, 20);
+    for (let i = 0; i < maze.path.length; i++) {
+      const pt = maze.path[i];
+      const cx = pad + pt.c * cs + cs / 2;
+      const cy = pad + pt.r * cs + cs / 2;
+      if (bombAt.has(i)) {
+        markers += `<circle cx="${cx}" cy="${cy}" r="8" fill="#fff0f3" stroke="#ff6b9d" stroke-width="2"/>`;
+        markers += mazeEmoji(cx, cy, "💣", 18);
+        continue;
+      }
+      if (i === 0) continue;
+      if (i < moves || done) {
+        markers += `<circle cx="${cx}" cy="${cy}" r="3.5" fill="#7ee8c0" opacity="0.85"/>`;
+      }
+    }
+    const px = pad + pos.c * cs + cs / 2;
+    const py = pad + pos.r * cs + cs / 2;
+    if (!done && !(moves === 0 && pos.r === startPt.r && pos.c === startPt.c)) {
+      markers += mazeEmoji(px, py, mascot, 20);
+    }
+    if (done) markers += mazeEmoji(px, py, mascot, 20);
+    const ex = pad + maze.exit.c * cs + cs / 2;
+    const ey = pad + maze.exit.r * cs + cs / 2;
+    markers += `<text x="${ex}" y="${ey + 5}" text-anchor="middle" font-size="12">🏁</text>`;
+    const leftMoves = Math.max(0, total - moves);
+    const bombN = unclearedMazeBombs(p).length;
+    let extra = "";
+    if (bombN > 0) {
+      extra = `<p class="maze-bombs-hint">💣 ${bombN}개 · 학습 탭 「오늘 틀린 문제」 복습으로 제거</p>
+        <button type="button" class="secondary maze-bomb-btn" data-maze-bomb-review>💣 폭탄 제거하러 복습하기</button>`;
+    }
+    return `<div class="maze-wrap">
+      <svg class="maze-svg" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="명언 미로">
+        <rect x="0" y="0" width="${svgW}" height="${svgH}" fill="#c4b5e0"/>
+        ${lines}
+        ${markers}
+      </svg>
+      <p class="maze-prog">${done ? "탈출 완료!" : `이동 ${moves} / ${total} · 탈출까지 ${leftMoves}번`}</p>
+      ${extra}
+    </div>`;
+  }
+
+  function renderQuotePuzzle(mk, elId, labelId) {
+    const p = getPuzzleState(mk);
+    const [y, m] = mk.split("-").map(Number);
+    if (labelId) {
+      const lab = document.getElementById(labelId);
+      if (lab) lab.textContent = `${y}년 ${m}월 명언 미로 (${p.total}일)`;
+    }
+    const box = document.getElementById(elId);
+    if (!box) return;
+    const done = p.moves >= p.total;
+    let html = renderMazeHtml(p);
+    if (done) {
+      html += `<div class="quote-jp">${escapeHtml(p.quote.jp)}</div><div class="quote-kr">${escapeHtml(p.quote.kr)}</div><div class="quote-complete">✨ 이번 달 명언 탈출!</div>`;
+    } else {
+      html += `<div class="quote-kr">탈출하면 이번 달 일본어 명언이 공개돼요</div>`;
+    }
+    box.innerHTML = html;
+    const bombBtn = box.querySelector("[data-maze-bomb-review]");
+    if (bombBtn) {
+      bombBtn.addEventListener("click", () => {
+        switchToTab("learn");
+        startSession("오늘 틀린 문제 (💣 제거)", "review|today", false, true);
+      });
+    }
+    const prog = document.getElementById("puzzleProg");
+    if (prog) {
+      const bn = unclearedMazeBombs(p).length;
+      prog.textContent = done
+        ? `이동 ${p.moves} / ${p.total} · 탈출 완료!`
+        : `이동 ${p.moves} / ${p.total} · 탈출까지 ${p.total - p.moves}번${bn ? ` · 💣 ${bn}` : ""}`;
+    }
+  }
+
+  function revealPuzzleLetter(mk) {
+    const p = getPuzzleState(mk);
+    if (hasBlockingMazeBomb(p)) {
+      toast("앞길에 💣가 있어요! 「오늘 틀린 문제」 복습으로 제거하세요");
+      return;
+    }
+    if (p.moves < p.total) {
+      p.moves++;
+      if (p.moves >= p.total && !p.completed) {
+        p.completed = true;
+        toast("미로 탈출! 이번 달 명언 공개 ✨");
+      }
+      save();
+    }
   }
 
   function j2k(id, jp, answersPipe) {
     return { id, type: "jp2kr", jp, answers: answersPipe.split("|") };
   }
-  function flipQ(id, jp, kr, extraPipe) {
-    const answers = [kr];
-    if (extraPipe) answers.push(...extraPipe.split("|"));
-    return { id, type: "flip", jp, kr, answers };
+  function baseQ(id, jp, krPipe) {
+    return { id, jp, kr: krPipe.split("|")[0], answers: krPipe.split("|") };
   }
   function k2j(id, kr, jp, d1, d2) {
     return { id, type: "kr2jp", kr, jp, options: [jp, d1, d2] };
   }
-  function listenQ(id, jp, krPipe, w1, w2) {
-    const right = krPipe.split("|")[0];
-    return { id, type: "listen", jp, kr: krPipe, options: [right, w1, w2] };
+  function listenQ(id, jp, wrong1, wrong2) {
+    return { id, type: "listen", jp, options: shuffle([jp, wrong1, wrong2]) };
   }
   function sitQ(id, scene, jp, d1, d2) {
     return { id, type: "situation", scene, jp, options: [jp, d1, d2] };
+  }
+
+  const KANA_WRONG_JP = ["あ", "い", "う", "え", "お", "か", "さ", "た", "な", "は", "ま", "や", "ら", "わ", "ア", "イ", "ウ", "エ", "オ"];
+  const KR_WRONG = ["안녕", "물", "책", "네", "아니요", "고마워", "화장실", "역", "1", "2", "3"];
+
+  function hashType(id, types) {
+    let h = 0;
+    const s = String(id);
+    for (let i = 0; i < s.length; i++) h = (h + s.charCodeAt(i) * (i + 1)) % 9973;
+    return types[h % types.length];
+  }
+
+  function kr2jOptions(jp, poolJp) {
+    const wrong = shuffle(poolJp.filter((x) => x !== jp)).slice(0, 2);
+    return shuffle([jp, wrong[0] || "あ", wrong[1] || "い"]);
+  }
+
+  function listenJpOptions(jp, poolJp) {
+    const wrong = shuffle(poolJp.filter((x) => x !== jp)).slice(0, 2);
+    return shuffle([jp, wrong[0] || "あ", wrong[1] || "い"]);
+  }
+
+  /** 같은 단어를 jp2kr / kr2jp / listen / (가능 시) situation 으로 섞음 */
+  function expandToMixedTypes(pool, opts = {}) {
+    const { kanaOnly = false, allowSituation = true } = opts;
+    const poolJp = pool.map((b) => b.jp).filter(Boolean);
+    const poolKr = pool.map((b) => b.kr || b.answers?.[0]).filter(Boolean);
+    const types = kanaOnly ? ["jp2kr", "kr2jp", "listen"] : ["jp2kr", "kr2jp", "listen", "situation"];
+
+    return pool.map((b) => {
+      if (b.type && b.type !== "jp2kr") return b;
+      const jp = b.jp;
+      const kr = b.kr || b.answers?.[0];
+      if (!jp || !kr) return b;
+      const id = b.id;
+      const typeList = b.scene && allowSituation ? ["jp2kr", "kr2jp", "listen", "situation"] : types;
+      let type = b.type === "situation" ? "situation" : hashType(id, typeList);
+      if (type === "situation" && (!allowSituation || !b.scene)) type = hashType(id + "x", ["jp2kr", "kr2jp", "listen"]);
+      if (type === "situation" && b.scene) {
+        const wrong = shuffle(["ありがとう", "すみません", "はい", "いいえ"].filter((x) => x !== jp)).slice(0, 2);
+        return { id: id + "_s", type: "situation", scene: b.scene, jp, options: shuffle([jp, wrong[0], wrong[1]]) };
+      }
+
+      if (type === "jp2kr") {
+        const ans = b.answers || (b.isKana ? [b.kr, b.romaji].filter(Boolean) : [kr]);
+        return {
+          id: id + "_j",
+          type: "jp2kr",
+          jp,
+          answers: ans,
+          isKana: !!b.isKana,
+          kr: b.kr || kr,
+          romaji: b.romaji || "",
+        };
+      }
+      if (type === "kr2jp") {
+        const optsJp = kanaOnly ? KANA_WRONG_JP : poolJp.length > 3 ? poolJp : KANA_WRONG_JP;
+        const displayKr = b.isKana ? kanaPrompt(b.kr, b.romaji) : String(kr).split("|")[0];
+        return {
+          id: id + "_k",
+          type: "kr2jp",
+          kr: displayKr,
+          jp,
+          isKana: !!b.isKana,
+          listenKo: b.kr,
+          options: kr2jOptions(jp, optsJp),
+        };
+      }
+      if (type === "listen") {
+        const optsJp = kanaOnly || b.isKana
+          ? KANA_WRONG_JP
+          : poolJp.length > 3
+            ? poolJp
+            : KANA_WRONG_JP;
+        return {
+          id: id + "_l",
+          type: "listen",
+          jp,
+          kr: b.isKana ? kanaPrompt(b.kr, b.romaji) : b.kr || String(kr).split("|")[0],
+          isKana: !!b.isKana,
+          options: listenJpOptions(jp, optsJp),
+        };
+      }
+      return { id: id + "_j", type: "jp2kr", jp, answers: b.answers || [kr] };
+    });
+  }
+
+  function parseKanaPipe(krPipe) {
+    const parts = String(krPipe).split("|").map((s) => s.trim()).filter(Boolean);
+    const ko = parts[0] || "";
+    const romaji = parts[1] || "";
+    const answers = romaji ? [ko, romaji] : [ko];
+    return { ko, romaji, answers };
+  }
+
+  function kanaPrompt(ko, romaji) {
+    return romaji ? `${ko} (${romaji})` : ko;
+  }
+
+  function fillKanaBank(target, prefix, rows) {
+    rows.forEach(([jp, krPipe], i) => {
+      const { ko, romaji, answers } = parseKanaPipe(krPipe);
+      target.push({ id: prefix + i, jp, kr: ko, romaji, answers, isKana: true });
+    });
   }
 
   const BANK = {
@@ -650,14 +1650,179 @@
     int_part: [],
     int_verb: [],
     int_talk: [],
+    int_make: [],
+    int_read: [],
     adv_news: [],
     adv_keigo: [],
+    adv_natural: [],
+    adv_real: [],
+    adv_biz: [],
     scene_travel: [],
     scene_rest: [],
     scene_store: [],
     scene_shop: [],
     scene_hospital: [],
     scene_ask: [],
+    scene_bath: [],
+    scene_travel_mid: [],
+    scene_rest_mid: [],
+    scene_store_mid: [],
+    scene_shop_mid: [],
+    scene_hospital_mid: [],
+    scene_ask_mid: [],
+    scene_bath_mid: [],
+    scene_travel_adv: [],
+    scene_rest_adv: [],
+    scene_store_adv: [],
+    scene_shop_adv: [],
+    scene_hospital_adv: [],
+    scene_ask_adv: [],
+    scene_bath_adv: [],
+  };
+
+  function hasKanji(s) {
+    return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(String(s || ""));
+  }
+
+  function catalogItemReading(jp, q) {
+    if (q?.isKana || !jp) return "";
+    if (q?.reading) return q.reading;
+    if (!hasKanji(jp)) return "";
+    return JP_READ_LUT[jp] || "";
+  }
+
+  function pushQ(bank, id, jp, kr, scene, reading) {
+    const o = baseQ(id, jp, kr);
+    if (scene) o.scene = scene;
+    if (reading) o.reading = reading;
+    bank.push(o);
+  }
+
+  function pushMany(bank, prefix, rows) {
+    rows.forEach((row, i) => pushQ(bank, prefix + i, row[0], row[1], row[2], row[3]));
+  }
+
+  function cloneBankTo(target, source, prefix) {
+    source.forEach((q, i) => {
+      target.push({
+        ...q,
+        id: prefix + i + "_" + (q.id || i),
+        answers: q.answers || (q.kr ? [q.kr] : []),
+      });
+    });
+  }
+
+  function allSceneMid() {
+    return [
+      ...BANK.scene_travel_mid,
+      ...BANK.scene_rest_mid,
+      ...BANK.scene_store_mid,
+      ...BANK.scene_shop_mid,
+      ...BANK.scene_hospital_mid,
+      ...BANK.scene_ask_mid,
+      ...BANK.scene_bath_mid,
+    ];
+  }
+
+  function allSceneAdv() {
+    return [
+      ...allSceneMid(),
+      ...BANK.scene_travel_adv,
+      ...BANK.scene_rest_adv,
+      ...BANK.scene_store_adv,
+      ...BANK.scene_shop_adv,
+      ...BANK.scene_hospital_adv,
+      ...BANK.scene_ask_adv,
+      ...BANK.scene_bath_adv,
+    ];
+  }
+
+  function poolIntermediate() {
+    return [
+      ...BANK.int_part,
+      ...BANK.int_verb,
+      ...BANK.int_talk,
+      ...BANK.int_make,
+      ...BANK.int_read,
+      ...BANK.beginner_greet,
+      ...BANK.beginner_word,
+      ...BANK.beginner_week,
+      ...BANK.beginner_time,
+      ...BANK.beginner_num,
+      ...allSceneMid(),
+    ];
+  }
+
+  function poolAdvanced() {
+    return [
+      ...poolIntermediate(),
+      ...BANK.adv_news,
+      ...BANK.adv_keigo,
+      ...BANK.adv_natural,
+      ...BANK.adv_real,
+      ...BANK.adv_biz,
+      ...allSceneAdv(),
+    ];
+  }
+
+  const JP_READ_LUT = {
+    "水": "みず", "本": "ほん", "人": "ひと", "犬": "いぬ", "猫": "ねこ", "ご飯": "ごはん", "お茶": "おちゃ",
+    "駅": "えき", "店": "みせ", "トイレ": "といれ", "学校": "がっこう", "玄関": "げんかん", "今日": "きょう",
+    "明日": "あした", "月曜日": "げつようび", "火曜日": "かようび", "水曜日": "すいようび", "木曜日": "もくようび",
+    "金曜日": "きんようび", "土曜日": "どようび", "日曜日": "にちようび", "一時": "いちじ", "二時": "にじ",
+    "三時": "さんじ", "四時": "よじ", "五時": "ごじ", "六時": "ろくじ", "七時": "しちじ", "八時": "はちじ",
+    "九時": "くじ", "十時": "じゅうじ", "今何時ですか": "いまなんじですか", "午前": "ごぜん", "午後": "ごご",
+    "大丈夫": "だいじょうぶ", "初めまして": "はじめまして", "お願いします": "おねがいします",
+    "これは私の本です": "これはわたしのほんです", "駅はどこですか": "えきはどこですか", "いくらですか": "いくらですか",
+    "助けてください": "たすけてください", "わかりません": "わかりません", "日本語が少し話せます": "にほんごがすこしはなせます",
+    "もう一度言ってください": "もういちどいってください", "ゆっくり話してください": "ゆっくりはなしてください",
+    "意味が分かりません": "いみがわかりません", "予約したいです": "よやくしたいです",
+    "地図を見せてください": "ちずをみせてください", "荷物を預けたいです": "にもつをあずけたいです",
+    "切符を一枚ください": "きっぷをいちまいください", "出口はどこですか": "でぐちはどこですか",
+    "乗り換えは必要ですか": "のりかえはひつようですか", "何時に出発しますか": "なんじにしゅっぱつしますか",
+    "遅れています": "おくれています", "大丈夫です": "だいじょうぶです", "気をつけて": "きをつけて",
+    "お大事に": "おだいじに", "頑張ってください": "がんばってください", "食べます": "たべます",
+    "食べました": "たべました", "食べません": "たべません", "行きます": "いきます", "行きました": "いきました",
+    "来ます": "きます", "来ました": "きました", "します": "します", "しました": "しました", "見ます": "みます",
+    "聞きます": "ききます", "話します": "はなします", "読みます": "よみます", "書きます": "かきます",
+    "待ちます": "まちます", "買います": "かいます", "一緒に行きませんか": "いっしょにいきませんか",
+    "今から大丈夫ですか": "いまからだいじょうぶですか", "ちょっと待ってください": "ちょっとまってください",
+    "気にしないでください": "きにしないでください", "どうしましたか": "どうしましたか", "お元気ですか": "おげんきですか",
+    "久しぶりですね": "ひさしぶりですね", "また今度": "またこんど", "お先に失礼します": "おさきにしつれいします",
+    "お疲れ様でした": "おつかれさまでした", "お世話になりました": "おせわになりました",
+    "物価が上がっている": "ぶっかがあがっている", "景気が悪い": "けいきがわるい", "失業率が高い": "しつぎょうりつがたかい",
+    "政府は対策を発表した": "せいふはたいさくをはっぴょうした", "感染が拡大している": "かんせんがかくだいしている",
+    "注意が必要だ": "ちゅういがひつようだ", "影響が出ている": "えいきょうがでている",
+    "議論が続いている": "ぎろんがつづいている", "詳しい情報を確認したい": "くわしいじょうほうをかくにんしたい",
+    "今後の見通しが立たない": "こんごのみとおしがたたない", "人手不足が深刻だ": "ひとでぶそくがしんこくだ",
+    "賃上げの動きがある": "ちんあげのうごきがある", "為替相場が変動した": "かわせそうばがへんどうした",
+    "株価が下落した": "かぶかがげらくした", "原油価格が高騰した": "げんゆかかくがこうとうした",
+    "いらっしゃいませ": "いらっしゃいませ", "申し上げます": "もうしあげます", "拝見します": "はいけんします",
+    "伺います": "うかがいます", "ございます": "ございます", "でございます": "でございます",
+    "お願い申し上げます": "おねがいもうしあげます", "恐れ入ります": "おそれいります",
+    "少々お待ちください": "しょうしょうおまちください", "私は学生です": "わたしはがくせいです",
+    "彼は先生です": "かれはせんせいです", "これは本です": "これはほんです", "それは私のかばんです": "それはわたしのかばんです",
+    "ここは駅です": "ここはえきです", "あそこは公園です": "あそこはこうえんです", "今日は暑いです": "きょうはあついです",
+    "昨日は寒かったです": "きのうはさむかったです", "日本語が好きです": "にほんごがすきです",
+    "映画を見たいです": "えいがをみたいです", "コーヒーを飲みたいです": "コーヒーをのみたいです",
+    "友達に会いたいです": "ともだちにあいたいです", "家に帰りたいです": "いえにかえりたいです",
+    "メニューを見せてください": "メニューをみせてください", "おすすめは何ですか": "おすすめはなんですか",
+    "お水をください": "おみずをください", "会計お願いします": "かいけいおねがいします",
+    "試着してもいいですか": "しちゃくしてもいいですか", "他の色はありますか": "ほかのいろはありますか",
+    "値引きはありますか": "ねびきはありますか", "レジはどこですか": "レジはどこですか",
+    "熱があります": "ねつがあります", "頭が痛いです": "あたまがいたいです", "吐き気がします": "はきけがします",
+    "薬をください": "くすりをください", "駅はどこですか": "えきはどこですか", "トイレはどこですか": "といれはどこですか",
+    "地図をください": "ちずをください", "道を教えてください": "みちをおしえてください",
+    "助けてください": "たすけてください", "迷子になりました": "まいごになりました",
+    "きっぷはどこで買いますか": "きっぷはどこでかいますか", "乗り換え": "のりかえ",
+    "切符を買いたいです": "きっぷをかいたいです", "次の電車は何時ですか": "つぎのでんしゃはなんじですか",
+    "降りる駅はどこですか": "おりるえきはどこですか", "タクシー乗り場はどこですか": "タクシーのりばはどこですか",
+    "袋はいりますか": "ふくろはいりますか", "温めますか": "あたためますか", "レシートください": "レシートください",
+    "すみません、注文お願いします": "すみません、ちゅうもんおねがいします", "お会計お願いします": "おかいけいおねがいします",
+    "私も行きます": "わたしもいきます", "図書館で勉強します": "としょかんでべんきょうします",
+    "食べたいです": "たべたいです", "行きたくないです": "いきたくないです", "書いてください": "かいてください",
+    "なるほど": "なるほど", "物価高が続く": "ぶっかだかがつづく", "円安が進む": "えんやすがすすむ",
+    "お世話になっております": "おせわになっております", "承知いたしました": "しょうちいたしました",
   };
 
   (function fillQuestions() {
@@ -667,95 +1832,96 @@
       return k2j(id, kr, jp, w[0], w[1]);
     }
 
-    const nums = [
+    /* 히라가나: 청음·탁음·반탁음·요음 (글자 자체 학습) */
+    const hiraSeion = [
+      ["あ", "아|a"], ["い", "이|i"], ["う", "우|u"], ["え", "에|e"], ["お", "오|o"],
+      ["か", "카|ka"], ["き", "키|ki"], ["く", "쿠|ku"], ["け", "케|ke"], ["こ", "코|ko"],
+      ["さ", "사|sa"], ["し", "시|shi"], ["す", "스|su"], ["せ", "세|se"], ["そ", "소|so"],
+      ["た", "타|ta"], ["ち", "치|chi"], ["つ", "츠|tsu"], ["て", "테|te"], ["と", "토|to"],
+      ["な", "나|na"], ["に", "니|ni"], ["ぬ", "누|nu"], ["ね", "네|ne"], ["の", "노|no"],
+      ["は", "하|ha"], ["ひ", "히|hi"], ["ふ", "후|fu"], ["へ", "헤|he"], ["ほ", "호|ho"],
+      ["ま", "마|ma"], ["み", "미|mi"], ["む", "무|mu"], ["め", "메|me"], ["も", "모|mo"],
+      ["や", "야|ya"], ["ゆ", "유|yu"], ["よ", "요|yo"],
+      ["ら", "라|ra"], ["り", "리|ri"], ["る", "루|ru"], ["れ", "레|re"], ["ろ", "로|ro"],
+      ["わ", "와|wa"], ["を", "오|wo"], ["ん", "응|n"],
+    ];
+    const hiraDaku = [
+      ["が", "가|ga"], ["ぎ", "기|gi"], ["ぐ", "구|gu"], ["げ", "게|ge"], ["ご", "고|go"],
+      ["ざ", "자|za"], ["じ", "지|ji"], ["ず", "즈|zu"], ["ぜ", "제|ze"], ["ぞ", "조|zo"],
+      ["だ", "다|da"], ["ぢ", "지|di"], ["づ", "즈|du"], ["で", "데|de"], ["ど", "도|do"],
+      ["ば", "바|ba"], ["び", "비|bi"], ["ぶ", "부|bu"], ["べ", "베|be"], ["ぼ", "보|bo"],
+    ];
+    const hiraHalt = [["ぱ", "파|pa"], ["ぴ", "피|pi"], ["ぷ", "푸|pu"], ["ぺ", "페|pe"], ["ぽ", "포|po"]];
+    const hiraYoon = [
+      ["きゃ", "캬|kya"], ["きゅ", "큐|kyu"], ["きょ", "쿄|kyo"],
+      ["しゃ", "샤|sha"], ["しゅ", "슈|shu"], ["しょ", "쇼|sho"],
+      ["ちゃ", "챠|cha"], ["ちゅ", "츄|chu"], ["ちょ", "쵸|cho"],
+      ["にゃ", "냐|nya"], ["にゅ", "뉴|nyu"], ["にょ", "뇨|nyo"],
+    ];
+    fillKanaBank(BANK.beginner_hira, "hi", [...hiraSeion, ...hiraDaku, ...hiraHalt, ...hiraYoon]);
+
+    const kataSeion = [
+      ["ア", "아|a"], ["イ", "이|i"], ["ウ", "우|u"], ["エ", "에|e"], ["オ", "오|o"],
+      ["カ", "카|ka"], ["キ", "키|ki"], ["ク", "쿠|ku"], ["ケ", "케|ke"], ["コ", "코|ko"],
+      ["サ", "사|sa"], ["シ", "시|shi"], ["ス", "스|su"], ["セ", "세|se"], ["ソ", "소|so"],
+      ["タ", "타|ta"], ["チ", "치|chi"], ["ツ", "츠|tsu"], ["テ", "테|te"], ["ト", "토|to"],
+      ["ナ", "나|na"], ["ニ", "니|ni"], ["ヌ", "누|nu"], ["ネ", "네|ne"], ["ノ", "노|no"],
+      ["ハ", "하|ha"], ["ヒ", "히|hi"], ["フ", "후|fu"], ["ヘ", "헤|he"], ["ホ", "호|ho"],
+      ["マ", "마|ma"], ["ミ", "미|mi"], ["ム", "무|mu"], ["メ", "메|me"], ["モ", "모|mo"],
+      ["ヤ", "야|ya"], ["ユ", "유|yu"], ["ヨ", "요|yo"],
+      ["ラ", "라|ra"], ["リ", "리|ri"], ["ル", "루|ru"], ["レ", "레|re"], ["ロ", "로|ro"],
+      ["ワ", "와|wa"], ["ヲ", "오|wo"], ["ン", "응|n"],
+    ];
+    const kataDaku = [
+      ["ガ", "가|ga"], ["ギ", "기|gi"], ["グ", "구|gu"], ["ゲ", "게|ge"], ["ゴ", "고|go"],
+      ["ザ", "자|za"], ["ジ", "지|ji"], ["ズ", "즈|zu"], ["ゼ", "제|ze"], ["ゾ", "조|zo"],
+      ["ダ", "다|da"], ["ヂ", "지|di"], ["ヅ", "즈|du"], ["デ", "데|de"], ["ド", "도|do"],
+      ["バ", "바|ba"], ["ビ", "비|bi"], ["ブ", "부|bu"], ["ベ", "베|be"], ["ボ", "보|bo"],
+    ];
+    const kataHalt = [["パ", "파|pa"], ["ピ", "피|pi"], ["プ", "푸|pu"], ["ペ", "페|pe"], ["ポ", "포|po"]];
+    fillKanaBank(BANK.beginner_kata, "ka", [...kataSeion, ...kataDaku, ...kataHalt]);
+
+    /* 초급: 완전 입문 — 숫자 1~10, 인사, 아주 쉬운 단어 */
+    [
       ["いち", "1|일"], ["に", "2|이"], ["さん", "3|삼"], ["よん", "4|사"], ["ご", "5|오"],
       ["ろく", "6|육"], ["なな", "7|칠"], ["はち", "8|팔"], ["きゅう", "9|구"], ["じゅう", "10|십"],
-      ["じゅういち", "11"], ["じゅうに", "12"], ["じゅうさん", "13"], ["じゅうよん", "14"], ["じゅうご", "15"],
-      ["にじゅう", "20|이십"], ["さんじゅう", "30"], ["よんじゅう", "40"], ["ひゃく", "100|백"],
-      ["にひゃく", "200"], ["せん", "1000|천"], ["まん", "10000|만"],
-    ];
-    nums.forEach(([jp, a], i) => BANK.beginner_num.push(j2k("nm" + i, jp, a)));
-    BANK.beginner_num.push(flipQ("nf0", "さん", "3", "삼"));
-    BANK.beginner_num.push(flipQ("nf1", "じゅう", "10", "십"));
-    BANK.beginner_num.push(listenQ("nl0", "ご", "5|오", "2", "8"));
-    BANK.beginner_num.push(k2jAuto("nk0", "7", "なな"));
+    ].forEach(([jp, a], i) => BANK.beginner_num.push(baseQ("nm" + i, jp, a)));
 
+    [
+      ["はい", "네"], ["いいえ", "아니요"], ["こんにちは", "안녕하세요"], ["ありがとう", "고마워|감사해요"],
+      ["すみません", "실례해요|죄송해요"], ["おはよう", "좋은아침"], ["さようなら", "안녕히가세요"],
+      { id: "grs0", jp: "お願いします", kr: "부탁해요", answers: ["부탁해요", "부탁합니다"], scene: "가게에서 계산할 때" },
+    ].forEach((row, i) => {
+      if (Array.isArray(row)) BANK.beginner_greet.push(baseQ("gr" + i, row[0], row[1]));
+      else BANK.beginner_greet.push(row);
+    });
+
+    [
+      ["水", "물"], ["本", "책"], ["人", "사람"], ["犬", "개"], ["猫", "고양이"],
+      ["ご飯", "밥"], ["お茶", "차"], ["駅", "역"], ["トイレ", "화장실"], ["店", "가게"],
+    ].forEach(([jp, kr], i) => BANK.beginner_word.push(baseQ("wd" + i, jp, kr)));
+
+    /* 중급 이상: 요일·시간·긴 문장 */
     const wk = [
       ["月曜日", "월요일"], ["火曜日", "화요일"], ["水曜日", "수요일"], ["木曜日", "목요일"],
-      ["金曜日", "금요일"], ["土曜日", "토요일"], ["日曜日", "일요일"], ["今日", "오늘"],
-      ["明日", "내일"], ["昨日", "어제"], ["一昨日", "그저께"], ["明後日", "모레"],
+      ["金曜日", "금요일"], ["土曜日", "토요일"], ["日曜日", "일요일"], ["今日", "오늘"], ["明日", "내일"],
     ];
-    wk.forEach(([jp, kr], i) => BANK.beginner_week.push(j2k("wk" + i, jp, kr)));
-    BANK.beginner_week.push(flipQ("wf0", "金曜日", "금요일"));
-    BANK.beginner_week.push(listenQ("wl0", "日曜日", "일요일", "월요일", "토요일"));
+    wk.forEach(([jp, kr], i) => BANK.beginner_week.push(baseQ("wk" + i, jp, kr)));
 
     const hrs = [
       ["一時", "1시"], ["二時", "2시"], ["三時", "3시"], ["四時", "4시"], ["五時", "5시"], ["六時", "6시"],
-      ["七時", "7시"], ["八時", "8시"], ["九時", "9시"], ["十時", "10시"], ["十一時", "11시"], ["十二時", "12시"],
+      ["七時", "7시"], ["八時", "8시"], ["九時", "9시"], ["十時", "10시"],
     ];
-    hrs.forEach(([jp, kr], i) => BANK.beginner_time.push(j2k("hr" + i, jp, kr)));
-    [
-      ["今何時ですか", "지금몇시예요|몇시예요"], ["午前", "오전"], ["午後", "오후"], ["朝", "아침"],
-      ["昼", "점심"], ["夜", "밤"], ["半", "반|30분"], ["分", "분"], ["時間", "시간"],
-    ].forEach(([jp, a], i) => BANK.beginner_time.push(j2k("ht" + i, jp, a)));
-    BANK.beginner_time.push(listenQ("tl0", "三時です", "3시예요", "2시예요", "4시예요"));
+    hrs.forEach(([jp, kr], i) => BANK.beginner_time.push(baseQ("hr" + i, jp, kr)));
+    [["今何時ですか", "지금몇시예요"], ["午前", "오전"], ["午後", "오후"]].forEach(([jp, a], i) =>
+      BANK.beginner_time.push(baseQ("ht" + i, jp, a))
+    );
 
-    const greet = [
-      ["ありがとう", "고마워|감사합니다"], ["こんにちは", "안녕하세요|낮인사"], ["おはよう", "좋은아침|안녕"],
-      ["こんばんは", "안녕하세요|저녁인사"], ["さようなら", "안녕히가세요|잘가"], ["すみません", "실례합니다|죄송합니다"],
-      ["ごめんなさい", "미안합니다"], ["はい", "네"], ["いいえ", "아니요"], ["お願いします", "부탁합니다"],
-      ["いただきます", "잘먹겠습니다"], ["ごちそうさまでした", "잘먹었습니다"], ["大丈夫", "괜찮아요|괜찮습니다"],
-      ["元気", "건강|기운좋음"], ["お疲れ様です", "수고하셨습니다"], ["初めまして", "처음뵙겠습니다"],
-      ["よろしくお願いします", "잘부탁드립니다"], ["久しぶり", "오랜만이에요"], ["ただいま", "다녀왔습니다"],
-      ["おかえりなさい", "다녀오셨어요"], ["行ってきます", "다녀오겠습니다"], ["行ってらっしゃい", "다녀오세요"],
+    const greetMid = [
+      ["ごめんなさい", "미안해요"], ["いただきます", "잘먹겠습니다"], ["ごちそうさまでした", "잘먹었습니다"],
+      ["大丈夫", "괜찮아요"], ["初めまして", "처음뵙겠습니다"], ["よろしくお願いします", "잘부탁해요"],
     ];
-    greet.forEach(([jp, a], i) => BANK.beginner_greet.push(j2k("gr" + i, jp, a)));
-    BANK.beginner_greet.push(flipQ("gf0", "おはよう", "좋은아침", "굿모닝"));
-    BANK.beginner_greet.push(sitQ("gs0", "식당에서 주문 마칠 때", "お願いします", "いただきます", "ごちそうさま"));
-
-    const verbs = [
-      ["食べる", "먹다"], ["飲む", "마시다"], ["見る", "보다"], ["聞く", "듣다"], ["言う", "말하다"],
-      ["行く", "가다"], ["来る", "오다"], ["帰る", "돌아가다"], ["買う", "사다"], ["売る", "팔다"],
-      ["読む", "읽다"], ["書く", "쓰다"], ["待つ", "기다리다"], ["立つ", "서다"], ["座る", "앉다"],
-      ["起きる", "일어나다"], ["寝る", "자다"], ["働く", "일하다"], ["勉強する", "공부하다"], ["教える", "가르치다"],
-      ["習う", "배우다"], ["分かる", "알다|이해하다"], ["思う", "생각하다"], ["知る", "알다"],
-      ["会う", "만나다"], ["話す", "이야기하다"], ["使う", "사용하다"], ["入る", "들어가다"], ["出る", "나가다"],
-    ];
-    verbs.forEach(([jp, kr], i) => BANK.beginner_hira.push(j2k("vb" + i, jp, kr)));
-
-    const nouns = [
-      ["水", "물"], ["本", "책"], ["火", "불"], ["木", "나무"], ["人", "사람"], ["男", "남자"], ["女", "여자"],
-      ["子供", "아이"], ["犬", "개"], ["猫", "고양이"], ["鳥", "새"], ["魚", "물고기"], ["肉", "고기"],
-      ["野菜", "야채"], ["果物", "과일"], ["牛乳", "우유"], ["卵", "달걀"], ["ご飯", "밥"], ["お茶", "차"],
-      ["学校", "학교"], ["教室", "교실"], ["駅", "역"], ["病院", "병원"], ["銀行", "은행"], ["郵便局", "우체국"],
-      ["図書館", "도서관"], ["公園", "공원"], ["店", "가게"], ["家", "집"], ["部屋", "방"], ["窓", "창문"],
-      ["ドア", "문"], ["鍵", "열쇠"], ["電車", "전철"], ["車", "차"], ["自転車", "자전거"], ["飛行機", "비행기"],
-    ];
-    nouns.forEach(([jp, kr], i) => BANK.beginner_word.push(j2k("wd" + i, jp, kr)));
-
-    const kata = [
-      ["コーヒー", "커피"], ["ジュース", "주스"], ["ビール", "맥주"], ["パン", "빵"], ["バター", "버터"],
-      ["チーズ", "치즈"], ["テレビ", "텔레비전"], ["ラジオ", "라디오"], ["カメラ", "카메라"], ["ギター", "기타"],
-      ["ピアノ", "피아노"], ["バス", "버스"], ["タクシー", "택시"], ["ホテル", "호텔"], ["レストラン", "레스토랑"],
-      ["メニュー", "메뉴"], ["ケーキ", "케이크"], ["コンビニ", "편의점"], ["スマホ", "스마트폰"], ["パソコン", "컴퓨터"],
-      ["インターネット", "인터넷"], ["アルバイト", "아르바이트"], ["セール", "세일"], ["サイズ", "사이즈"],
-      ["エアコン", "에어컨"], ["シャワー", "샤워"], ["シャンプー", "샴푸"], ["タオル", "수건"], ["スリッパ", "슬리퍼"],
-      ["ゼロ", "영|0"], ["ワン", "일|1"], ["ツー", "이|2"], ["スリー", "삼|3"], ["フォー", "사|4"],
-    ];
-    kata.forEach(([jp, kr], i) => BANK.beginner_kata.push(j2k("kt" + i, jp, kr)));
-    BANK.beginner_kata.push(flipQ("kf0", "アメリカ", "미국", "아메리카"));
-    BANK.beginner_kata.push(k2jAuto("kk0", "한국", "韓国"));
-
-    const adj = [
-      ["大きい", "크다"], ["小さい", "작다"], ["高い", "높다|비싸다"], ["安い", "싸다"], ["新しい", "새롭다"],
-      ["古い", "오래되다"], ["暑い", "덥다"], ["寒い", "춥다"], ["暖かい", "따뜻하다"], ["涼しい", "시원하다"],
-      ["難しい", "어렵다"], ["易しい", "쉽다"], ["忙しい", "바쁘다"], ["暇", "한가하다"], ["楽しい", "즐겁다"],
-    ];
-    adj.forEach(([jp, kr], i) => BANK.beginner_hira.push(j2k("adj" + i, jp, kr)));
-
-    BANK.beginner_hira.push(k2jAuto("hk0", "화장실", "トイレ"));
-    BANK.beginner_hira.push(listenQ("hl0", "ありがとう", "고마워", "안녕", "미안"));
-    BANK.beginner_hira.push(sitQ("hs0", "편의점에서 계산할 때", "お願いします", "いただきます", "すみません"));
+    greetMid.forEach(([jp, a], i) => BANK.beginner_greet.push(baseQ("grm" + i, jp, a)));
 
     const mid = [
       ["これは私の本です", "이것은제책이에요|제책이에요"], ["駅はどこですか", "역이어디예요"], ["いくらですか", "얼마예요"],
@@ -768,7 +1934,7 @@
     ];
     mid.forEach(([jp, a], i) => BANK.int_part.push(j2k("ip" + i, jp, a)));
     BANK.int_part.push(k2jAuto("ipk0", "~도 (조사)", "も"));
-    BANK.int_part.push(listenQ("ipl0", "どこですか", "어디예요", "언제예요", "누구예요"));
+    BANK.int_part.push(listenQ("ipl0", "どこですか", "いつですか", "だれですか"));
 
     const vtab = [
       ["食べます", "먹습니다"], ["食べました", "먹었습니다"], ["食べません", "먹지않습니다"], ["行きます", "갑니다"],
@@ -813,7 +1979,7 @@
       ["地図で見せてください", "지도로보여주세요"], ["ここで降ります", "여기서내립니다"],
     ];
     tr.forEach(([jp, kr], i) => BANK.scene_travel.push(j2k("tr" + i, jp, kr)));
-    BANK.scene_travel.push(flipQ("trf0", "乗り換え", "환승"));
+    BANK.scene_travel.push(baseQ("trf0", "乗り換え", "환승"));
 
     const rest = [
       ["メニューを見せてください", "메뉴를보여주세요"], ["おすすめは何ですか", "추천이뭐예요"], ["お水をください", "물주세요"],
@@ -851,6 +2017,302 @@
       ["迷子になりました", "길을잃었습니다"], ["助けてください", "도와주세요"],
     ];
     ask.forEach(([jp, kr], i) => BANK.scene_ask.push(j2k("as" + i, jp, kr)));
+
+    cloneBankTo(BANK.scene_travel_mid, BANK.scene_travel, "tm");
+    cloneBankTo(BANK.scene_rest_mid, BANK.scene_rest, "rm");
+    cloneBankTo(BANK.scene_store_mid, BANK.scene_store, "sm");
+    cloneBankTo(BANK.scene_shop_mid, BANK.scene_shop, "hm");
+    cloneBankTo(BANK.scene_hospital_mid, BANK.scene_hospital, "pm");
+    cloneBankTo(BANK.scene_ask_mid, BANK.scene_ask, "am");
+
+    pushMany(BANK.int_make, "mk", [
+      ["私は学生です", "나는학생이에요"], ["彼は先生です", "그는선생님이에요"], ["これは本です", "이것은책이에요"],
+      ["それは私のかばんです", "그것은내가방이에요"], ["ここは駅です", "여기는역이에요"], ["あそこは公園です", "저기는공원이에요"],
+      ["今日は暑いです", "오늘은덥습니다"], ["昨日は寒かったです", "어제는추웠습니다"], ["日本語が好きです", "일본어를좋아합니다"],
+      ["映画を見たいです", "영화를보고싶습니다"], ["コーヒーを飲みたいです", "커피를마시고싶습니다"],
+      ["友達に会いたいです", "친구를만나고싶습니다"], ["家に帰りたいです", "집에돌아가고싶습니다"],
+      ["もっと練習したいです", "더연습하고싶습니다"], ["ゆっくり話してください", "천천히말해주세요"],
+    ]);
+
+    pushMany(BANK.int_read, "ir", [
+      ["明日雨が降るそうです", "내일비가온다고합니다"], ["彼女は日本に住んでいます", "그녀는일본에살고있습니다"],
+      ["この料理はおいしいです", "이요리는맛있습니다"], ["電車が遅れています", "전철이늦고있습니다"],
+      ["宿題を忘れました", "숙제를잊었습니다"], ["会議は三時からです", "회의는3시부터입니다"],
+      ["新しい店ができました", "새가게가생겼습니다"], ["彼はもう帰りました", "그는이미돌아갔습니다"],
+    ]);
+
+    pushMany(BANK.int_part, "ipx", [
+      ["私も行きます", "나도갑니다"], ["これは私のです", "이것은제것입니다"], ["駅にはバスがあります", "역에는버스가있습니다"],
+      ["図書館で勉強します", "도서관에서공부합니다"], ["友達と話します", "친구와이야기합니다"],
+      ["電車で会社へ行きます", "전철로회사에갑니다"], ["お茶を飲みながら待ちます", "차를마시며기다립니다"],
+      ["週末に映画を見ます", "주말에영화를봅니다"], ["毎朝コーヒーを飲みます", "매일아침커피를마십니다"],
+    ]);
+
+    pushMany(BANK.int_verb, "ivx", [
+      ["食べたいです", "먹고싶습니다"], ["行きたくないです", "가고싶지않습니다"], ["見えると思います", "볼수있을것같습니다"],
+      ["書いてください", "적어주세요"], ["持ってきてください", "가져와주세요"], ["置いてください", "내려놓아주세요"],
+      ["開けてもいいですか", "열어도되나요"], ["閉めてください", "닫아주세요"], ["使わせていただきます", "사용하겠습니다"],
+    ]);
+
+    pushMany(BANK.int_talk, "itx", [
+      ["ちょっと待ってもらえますか", "잠깐기다려주실수있나요"], ["もう一度お願いします", "한번더부탁합니다"],
+      ["そうですね", "그렇네요"], ["大丈夫だと思います", "괜찮을것같아요"], ["楽しみにしています", "기대하고있습니다"],
+      ["お先に失礼します", "먼저실례하겠습니다"], ["お疲れ様でした", "수고하셨습니다"], ["久しぶりですね", "오랜만이네요"],
+      ["また連絡します", "또연락할게요"], ["気をつけてください", "조심하세요"],
+    ]);
+
+    pushMany(BANK.adv_natural, "anat", [
+      ["なるほど", "그렇구나"], ["まあいいか", "뭐괜찮지"], ["しょうがない", "어쩔수없지"], ["ちょっと待って", "잠깐만"],
+      ["めちゃくちゃ", "엄청"], ["やばい", "대박|헉"], ["マジで", "진짜로"], ["うっそ", "거짓말"],
+    ]);
+
+    pushMany(BANK.adv_real, "areal", [
+      ["とりあえずビールで", "일단맥주로"], ["なんか疲れた", "뭔가피곤해"], ["ちょっと腹減った", "좀배고파"],
+      ["まじ感謝", "진짜감사"], ["それな", "그거맞아"], ["わかる", "알겠어"],
+    ]);
+
+    pushMany(BANK.adv_biz, "abiz", [
+      ["お世話になっております", "항상신세지고있습니다"], ["失礼いたします", "실례하겠습니다"],
+      ["ご確認お願いいたします", "확인부탁드립니다"], ["承知いたしました", "알겠습니다"],
+      ["検討させていただきます", "검토하겠습니다"], ["資料を共有します", "자료를공유하겠습니다"],
+      ["会議を設定します", "회의를잡겠습니다"], ["ご都合はいかがでしょうか", "일정이어떠신가요"],
+    ]);
+
+    pushMany(BANK.adv_news, "anx", [
+      ["物価高が続く", "물가상승이이어진다"], ["円安が進む", "엔화약세가진행된다"], ["政府が対策を発表", "정부가대책을발표"],
+      ["感染拡大に注意", "감염확대에주의"], ["景気回復の兆し", "경기회복의조짐"],
+    ]);
+
+    const S_REST = "식당·카페";
+    const S_STORE = "편의점·마트";
+    const S_SHOP = "쇼핑";
+    const S_TRAVEL = "여행·교통";
+    const S_HOSP = "병원";
+    const S_ASK = "길묻기·안내";
+    const S_BATH = "화장실·공공장소";
+
+    pushMany(BANK.scene_rest_mid, "rsm", [
+      ["すみません、注文お願いします", "실례합니다주문부탁합니다", S_REST],
+      ["お会計お願いします", "계산부탁합니다", S_REST],
+      ["テイクアウトでお願いします", "포장으로부탁합니다", S_REST],
+      ["店内でお願いします", "매장식사로부탁합니다", S_REST],
+      ["おすすめのメニューは？", "추천메뉴는?", S_REST],
+      ["辛くないものはありますか", "안매운메뉴있나요", S_REST],
+      ["アレルギー対応できますか", "알레르기대응가능한가요", S_REST],
+      ["もう少し待ってください", "조금만더기다려주세요", S_REST],
+      ["おいしいです", "맛있어요", S_REST],
+      ["ごちそうさまでした", "잘먹었습니다", S_REST],
+    ]);
+
+    pushMany(BANK.scene_store_mid, "ssm", [
+      ["袋は要りますか", "봉투필요한가요", S_STORE],
+      ["温めますか", "데워드릴까요", S_STORE],
+      ["ポイントカードはありますか", "포인트카드있나요", S_STORE],
+      ["レシートください", "영수증주세요", S_STORE],
+      ["お箸をください", "젓가락주세요", S_STORE],
+      ["これください", "이거주세요", S_STORE],
+      ["別の商品はありますか", "다른상품있나요", S_STORE],
+      ["セルフですか", "셀프인가요", S_STORE],
+    ]);
+
+    pushMany(BANK.scene_shop_mid, "hsm", [
+      ["試着できますか", "입어봐도되나요", S_SHOP],
+      ["他の色はありますか", "다른색있나요", S_SHOP],
+      ["サイズ交換できますか", "사이즈교환되나요", S_SHOP],
+      ["値引きはありますか", "할인있나요", S_SHOP],
+      ["レジはどこですか", "계산대어디예요", S_SHOP],
+      ["免税できますか", "면세되나요", S_SHOP],
+    ]);
+
+    pushMany(BANK.scene_travel_mid, "tsm", [
+      ["切符を買いたいです", "표를사고싶어요", S_TRAVEL],
+      ["次の電車は何時ですか", "다음전철은몇시예요", S_TRAVEL],
+      ["この電車は○○行きですか", "이전철은OO행인가요", S_TRAVEL],
+      ["降りる駅はどこですか", "내릴역은어디예요", S_TRAVEL],
+      ["タクシー乗り場はどこですか", "택시승차장어디예요", S_TRAVEL],
+      ["荷物を預けられますか", "짐맡길수있나요", S_TRAVEL],
+      ["Wi-Fiはありますか", "와이파이있나요", S_TRAVEL],
+    ]);
+
+    pushMany(BANK.scene_hospital_mid, "hpm", [
+      ["熱があります", "열이있어요", S_HOSP],
+      ["頭が痛いです", "머리가아파요", S_HOSP],
+      ["薬をください", "약주세요", S_HOSP],
+      ["保険証を忘れました", "보험증잊었어요", S_HOSP],
+      ["予約は必要ですか", "예약필요한가요", S_HOSP],
+      ["吐き気がします", "메스꺼워요", S_HOSP],
+    ]);
+
+    pushMany(BANK.scene_ask_mid, "asm", [
+      ["駅はどこですか", "역어디예요", S_ASK],
+      ["トイレはどこですか", "화장실어디예요", S_ASK],
+      ["この地図で教えてください", "이지도로알려주세요", S_ASK],
+      ["ここまでいくらですか", "여기까지얼마예요", S_ASK],
+      ["道に迷いました", "길을잃었어요", S_ASK],
+      ["近くにコンビニはありますか", "근처편의점있나요", S_ASK],
+    ]);
+
+    pushMany(BANK.scene_bath_mid, "bsm", [
+      ["トイレはどこですか", "화장실어디예요", S_BATH],
+      ["お手洗いはどちらですか", "화장실어느쪽인가요", S_BATH],
+      ["男性用はどこですか", "남자용어디예요", S_BATH],
+      ["女性用はどこですか", "여자용어디예요", S_BATH],
+    ]);
+
+    pushMany(BANK.scene_rest_adv, "rsa", [
+      ["お会計を別々にお願いします", "계산따로따로부탁합니다", S_REST],
+      ["デザートメニューはありますか", "디저트메뉴있나요", S_REST],
+      ["予約のキャンセルは可能ですか", "예약취소가능한가요", S_REST],
+      ["コース料理をお願いします", "코스요리부탁합니다", S_REST],
+      ["お酒は何がおすすめですか", "술뭐가추천인가요", S_REST],
+    ]);
+
+    pushMany(BANK.scene_store_adv, "ssa", [
+      ["領収書を発行できますか", "영수증발행가능한가요", S_STORE],
+      ["電子マネーは使えますか", "전자결제되나요", S_STORE],
+      ["在庫はありますか", "재고있나요", S_STORE],
+      ["取り寄せは可能ですか", "주문가능한가요", S_STORE],
+    ]);
+
+    pushMany(BANK.scene_shop_adv, "hsa", [
+      ["返品は可能ですか", "반품가능한가요", S_SHOP],
+      ["ギフト包装お願いします", "선물포장부탁합니다", S_SHOP],
+      ["保証はありますか", "보증있나요", S_SHOP],
+      ["会員登録は必要ですか", "회원가입필요한가요", S_SHOP],
+    ]);
+
+    pushMany(BANK.scene_travel_adv, "tsa", [
+      ["乗り換えは何番線ですか", "환승몇번선인가요", S_TRAVEL],
+      ["指定席をお願いします", "지정석부탁합니다", S_TRAVEL],
+      ["新幹線の切符をください", "신칸센표주세요", S_TRAVEL],
+      ["空港までどのくらいですか", "공항까지얼마나걸려요", S_TRAVEL],
+      ["遅延証明をください", "지연증명주세요", S_TRAVEL],
+    ]);
+
+    pushMany(BANK.scene_hospital_adv, "hpa", [
+      ["診察券を忘れました", "진료카드잊었어요", S_HOSP],
+      ["痛みがひどいです", "통증이심해요", S_HOSP],
+      ["薬のアレルギーがあります", "약알레르기있어요", S_HOSP],
+      ["入院は必要ですか", "입원필요한가요", S_HOSP],
+    ]);
+
+    pushMany(BANK.scene_ask_adv, "asa", [
+      ["このバスは市役所前ですか", "이버스시청앞인가요", S_ASK],
+      ["徒歩で何分ですか", "걸어서몇분인가요", S_ASK],
+      ["タクシーで行けますか", "택시로갈수있나요", S_ASK],
+    ]);
+
+    pushMany(BANK.scene_bath_adv, "bsa", [
+      ["多目的トイレはありますか", "다목적화장실있나요", S_BATH],
+      ["車椅子対応はありますか", "휠체어대응있나요", S_BATH],
+    ]);
+
+    pushMany(BANK.int_make, "mk2", [
+      ["彼女は医者です", "그녀는의사입니다"], ["あれは私の車です", "저것은내차입니다"],
+      ["ここは静かです", "여기는조용합니다"], ["そこは危ないです", "저기는위험합니다"],
+      ["日本は美しい国です", "일본은아름다운국가입니다"], ["彼はとても親切です", "그는매우친절합니다"],
+      ["この映画は面白いです", "이영화는재미있습니다"], ["その本は難しいです", "그책은어렵습니다"],
+      ["もう帰りたいです", "이제돌아가고싶습니다"], ["一緒に食べたいです", "같이먹고싶습니다"],
+    ]);
+    pushMany(BANK.int_read, "ir2", [
+      ["電話が鳴っています", "전화가울리고있습니다"], ["雨が降っています", "비가내리고있습니다"],
+      ["道が混んでいます", "길이막히고있습니다"], ["店は閉まっています", "가게가닫혀있습니다"],
+      ["彼はまだ来ていません", "그는아직오지않았습니다"], ["もう終わりました", "이미끝났습니다"],
+      ["明日は休みです", "내일은휴일입니다"], ["来週旅行に行きます", "다음주여행갑니다"],
+    ]);
+    pushMany(BANK.int_part, "ipx2", [
+      ["電車に乗ります", "전철에탑니다"], ["バスで行きます", "버스로갑니다"], ["歩いて帰ります", "걸어서돌아갑니다"],
+      ["図書館に行きます", "도서관에갑니다"], ["公園で遊びます", "공원에서놉니다"],
+      ["家で休みます", "집에서쉽니다"], ["会社で働きます", "회사에서일합니다"],
+    ]);
+    pushMany(BANK.int_verb, "ivx2", [
+      ["聞いてください", "들어주세요"], ["見てください", "봐주세요"], ["読んでください", "읽어주세요"],
+      ["教えてください", "가르쳐주세요"], ["説明してください", "설명해주세요"], ["確認してください", "확인해주세요"],
+    ]);
+    pushMany(BANK.int_talk, "itx2", [
+      ["どう思いますか", "어떻게생각하세요"], ["賛成です", "찬성입니다"], ["反対です", "반대입니다"],
+      ["なるほどそうですね", "그렇군요그렇네요"], ["それは残念ですね", "그건아쉽네요"],
+      ["お疲れ様です", "수고하세요"], ["おかげさまで", "덕분에"],
+    ]);
+    pushMany(BANK.adv_keigo, "akx", [
+      ["ご連絡いたします", "연락드리겠습니다"], ["お返事お待ちしております", "답변기다리겠습니다"],
+      ["お手数をおかけします", "번거롭게해드립니다"], ["ご迷惑をおかけします", "폐를끼칩니다"],
+      ["お気をつけください", "조심하십시오"], ["ご無沙汰しております", "오랜만입니다"],
+    ]);
+    pushMany(BANK.adv_natural, "anat2", [
+      ["まあね", "뭐그렇지"], ["そっか", "그렇구나"], ["うんうん", "응응"], ["ほんと", "진짜"],
+      ["やっぱ", "역시"], ["てか", "그나저나"], ["むしろ", "오히려"],
+    ]);
+    pushMany(BANK.adv_real, "areal2", [
+      ["めっちゃいい", "엄청좋아"], ["きつい", "힘들어"], ["しんどい", "버거워"],
+      ["だるい", "귀찮아"], ["テンション上がる", "텐션올라"], ["テンション下がる", "텐션떨어져"],
+    ]);
+    pushMany(BANK.adv_biz, "abiz2", [
+      ["ご検討のほどよろしくお願いします", "검토부탁드립니다"], ["ご承認お願いいたします", "승인부탁드립니다"],
+      ["ご署名をお願いします", "서명부탁드립니다"], ["契約書を送付します", "계약서송부합니다"],
+    ]);
+    pushMany(BANK.scene_rest_mid, "rsm2", [
+      ["禁煙席をお願いします", "금연석부탁합니다", S_REST],
+      ["子供用の椅子はありますか", "아이용의자있나요", S_REST],
+      ["おかわりお願いします", "리필부탁합니다", S_REST],
+      ["持ち帰りできますか", "포장가능한가요", S_REST],
+      ["予約は何時ですか", "예약몇시인가요", S_REST],
+      ["クレジットカードは使えますか", "카드되나요", S_REST],
+    ]);
+    pushMany(BANK.scene_store_mid, "ssm2", [
+      ["お弁当はありますか", "도시락있나요", S_STORE],
+      ["おにぎりはありますか", "주먹밥있나요", S_STORE],
+      ["コーヒーはどこですか", "커피어디예요", S_STORE],
+      ["トイレットペーパーはありますか", "화장지있나요", S_STORE],
+      ["おつりください", "거스름돈주세요", S_STORE],
+    ]);
+    pushMany(BANK.scene_shop_mid, "hsm2", [
+      ["クレジットは使えますか", "카드되나요", S_SHOP],
+      ["現金のみですか", "현금만인가요", S_SHOP],
+      ["在庫を確認してください", "재고확인해주세요", S_SHOP],
+      ["もう少し安くなりますか", "조금더싸지나요", S_SHOP],
+    ]);
+    pushMany(BANK.scene_travel_mid, "tsm2", [
+      ["終電は何時ですか", "막차몇시예요", S_TRAVEL],
+      ["始発は何時ですか", "첫차몇시예요", S_TRAVEL],
+      ["座席を変えたいです", "좌석바꾸고싶어요", S_TRAVEL],
+      ["窓側の席をお願いします", "창가좌석부탁합니다", S_TRAVEL],
+      ["通路側の席をお願いします", "통로쪽좌석부탁합니다", S_TRAVEL],
+    ]);
+    pushMany(BANK.scene_hospital_mid, "hpm2", [
+      ["咳が出ます", "기침이나요", S_HOSP],
+      ["喉が痛いです", "목이아파요", S_HOSP],
+      ["腰が痛いです", "허리가아파요", S_HOSP],
+      ["薬の飲み方を教えてください", "약먹는법알려주세요", S_HOSP],
+    ]);
+    pushMany(BANK.scene_ask_mid, "asm2", [
+      ["バス停はどこですか", "버스정류장어디예요", S_ASK],
+      ["一番近い駅はどこですか", "가장가까운역어디예요", S_ASK],
+      ["歩いて行けますか", "걸어갈수있나요", S_ASK],
+      ["ここは何ですか", "여기가뭐예요", S_ASK],
+    ]);
+    pushMany(BANK.scene_rest_adv, "rsa2", [
+      ["ワインリストをください", "와인리스트주세요", S_REST],
+      ["アレルギー表示はありますか", "알레르기표시있나요", S_REST],
+      ["コースの変更は可能ですか", "코스변경가능한가요", S_REST],
+    ]);
+    pushMany(BANK.scene_travel_adv, "tsa2", [
+      ["グリーン車に乗りたいです", "그린차타고싶어요", S_TRAVEL],
+      ["自由席で大丈夫です", "자유석으로괜찮아요", S_TRAVEL],
+      ["座席指定をお願いします", "좌석지정부탁합니다", S_TRAVEL],
+    ]);
+    pushMany(BANK.scene_hospital_adv, "hpa2", [
+      ["検査結果を教えてください", "검사결과알려주세요", S_HOSP],
+      ["次の診察はいつですか", "다음진료언제인가요", S_HOSP],
+    ]);
+
+    function applyBankReadings() {
+      allBanksFlat().forEach((q) => {
+        if (q.reading || q.isKana || !q.jp || !hasKanji(q.jp)) return;
+        if (JP_READ_LUT[q.jp]) q.reading = JP_READ_LUT[q.jp];
+      });
+    }
+    applyBankReadings();
   })();
 
   BANK.beginner_mix1 = [...BANK.beginner_hira, ...BANK.beginner_num, ...BANK.beginner_kata];
@@ -871,31 +2333,15 @@
   }
 
   function poolByLearnPath(path) {
+    const lv = state.level;
     const allBeginner = [
       ...BANK.beginner_hira,
-      ...BANK.beginner_num,
       ...BANK.beginner_kata,
+      ...BANK.beginner_num,
       ...BANK.beginner_week,
       ...BANK.beginner_time,
       ...BANK.beginner_greet,
       ...BANK.beginner_word,
-    ];
-    const allMid = [...allBeginner, ...BANK.int_part, ...BANK.int_verb, ...BANK.int_talk, ...BANK.scene_travel, ...BANK.scene_rest, ...BANK.scene_store];
-    const allAdv = [
-      ...allMid,
-      ...BANK.adv_news,
-      ...BANK.adv_keigo,
-      ...BANK.scene_shop,
-      ...BANK.scene_hospital,
-      ...BANK.scene_ask,
-    ];
-    const allScene = [
-      ...BANK.scene_travel,
-      ...BANK.scene_rest,
-      ...BANK.scene_store,
-      ...BANK.scene_shop,
-      ...BANK.scene_hospital,
-      ...BANK.scene_ask,
     ];
     const map = {
       "beginner|hira": "beginner_hira",
@@ -912,96 +2358,75 @@
       "beginner|mix|all": "beginner_mix1",
       "intermediate|part": "int_part",
       "intermediate|verb": "int_verb",
-      "intermediate|make": "int_part",
+      "intermediate|make": "int_make",
       "intermediate|talk": "int_talk",
-      "intermediate|read": "int_part",
-      "intermediate|mix|pt": "int_part",
-      "intermediate|mix|vm": "int_verb",
-      "intermediate|mix|rand": "int_talk",
-      "intermediate|mix|bi": "int_part",
-      "advanced|natural": "adv_news",
+      "intermediate|read": "int_read",
+      "intermediate|mix|pt": () => [...BANK.int_part, ...BANK.int_talk],
+      "intermediate|mix|vm": () => [...BANK.int_verb, ...BANK.int_make],
+      "intermediate|mix|rand": () => poolIntermediate(),
+      "intermediate|mix|bi": () => poolIntermediate(),
+      "advanced|natural": "adv_natural",
       "advanced|news": "adv_news",
-      "advanced|biz": "adv_keigo",
+      "advanced|biz": "adv_biz",
       "advanced|keigo": "adv_keigo",
-      "advanced|real": "adv_news",
-      "advanced|mix|ar": "adv_news",
-      "advanced|mix|tn": "adv_news",
-      "advanced|mix|mr": "adv_news",
-      "advanced|mix|all": "adv_news",
-      "situ|rest": "scene_rest",
-      "situ|store": "scene_store",
-      "situ|shop": "scene_shop",
-      "situ|bath": "scene_ask",
-      "situ|travel": "scene_travel",
-      "situ|hospital": "scene_hospital",
-      "situ|ask": "scene_ask",
-      "situ|mix|travel": "scene_travel",
-      "situ|mix|shop": "scene_shop",
-      "situ|mix|life": "scene_store",
+      "advanced|real": "adv_real",
+      "advanced|mix|ar": () => [...BANK.adv_natural, ...BANK.adv_real, ...BANK.adv_news],
+      "advanced|mix|tn": () => [...BANK.adv_news, ...BANK.adv_keigo],
+      "advanced|mix|mr": () => poolAdvanced(),
+      "advanced|mix|all": () => poolAdvanced(),
+      "situ|rest": () => (lv === "advanced" ? BANK.scene_rest_adv : BANK.scene_rest_mid),
+      "situ|store": () => (lv === "advanced" ? BANK.scene_store_adv : BANK.scene_store_mid),
+      "situ|shop": () => (lv === "advanced" ? BANK.scene_shop_adv : BANK.scene_shop_mid),
+      "situ|bath": () => (lv === "advanced" ? BANK.scene_bath_adv : BANK.scene_bath_mid),
+      "situ|travel": () => (lv === "advanced" ? BANK.scene_travel_adv : BANK.scene_travel_mid),
+      "situ|hospital": () => (lv === "advanced" ? BANK.scene_hospital_adv : BANK.scene_hospital_mid),
+      "situ|ask": () => (lv === "advanced" ? BANK.scene_ask_adv : BANK.scene_ask_mid),
+      "situ|mix|travel": () => (lv === "advanced" ? [...BANK.scene_travel_adv, ...BANK.scene_travel_mid] : BANK.scene_travel_mid),
+      "situ|mix|shop": () => (lv === "advanced" ? [...BANK.scene_shop_adv, ...BANK.scene_store_adv] : [...BANK.scene_shop_mid, ...BANK.scene_store_mid]),
+      "situ|mix|life": () => (lv === "advanced" ? allSceneAdv() : allSceneMid()),
     };
+    if (path === "beginner|mix|wt") return [...BANK.beginner_week, ...BANK.beginner_time];
+    if (path === "beginner|mix|gw") return [...BANK.beginner_greet, ...BANK.beginner_word];
     const k = map[path];
+    if (typeof k === "function") return [...k()];
     if (k && BANK[k]) return [...BANK[k]];
     if (path.startsWith("beginner")) return [...allBeginner];
-    if (path.startsWith("intermediate")) return [...allMid];
-    if (path.startsWith("advanced")) return [...allAdv];
-    if (path.startsWith("situ")) return [...allScene];
+    if (path.startsWith("intermediate")) return poolIntermediate();
+    if (path.startsWith("advanced")) return poolAdvanced();
+    if (path.startsWith("situ")) return lv === "advanced" ? allSceneAdv() : allSceneMid();
     return [...allBeginner];
+  }
+
+  function isKanaPath(path) {
+    return path === "beginner|hira" || path === "beginner|kata" || path === "beginner|mix|hk";
+  }
+
+  function prepareSessionQuestions(raw, opts = {}) {
+    const { kanaOnly = false, allowSituation = true } = opts;
+    return expandToMixedTypes(raw, { kanaOnly, allowSituation });
   }
 
   function dailyQuestPool() {
     const lv = state.level;
-    const b = [
-      ...BANK.beginner_hira,
-      ...BANK.beginner_kata,
-      ...BANK.beginner_num,
-      ...BANK.beginner_week,
-      ...BANK.beginner_time,
-      ...BANK.beginner_greet,
-      ...BANK.beginner_word,
-    ];
-    const mid = [
-      ...b,
-      ...BANK.int_part,
-      ...BANK.int_verb,
-      ...BANK.int_talk,
-      ...BANK.scene_travel,
-      ...BANK.scene_rest,
-      ...BANK.scene_store,
-    ];
-    const adv = [
-      ...mid,
-      ...BANK.adv_news,
-      ...BANK.adv_keigo,
-      ...BANK.scene_shop,
-      ...BANK.scene_hospital,
-      ...BANK.scene_ask,
-    ];
-    if (lv === "advanced") return adv;
-    if (lv === "intermediate") return mid;
-    return b;
+    if (lv === "advanced") return poolAdvanced();
+    if (lv === "intermediate") return poolIntermediate();
+    return [...BANK.beginner_hira, ...BANK.beginner_kata];
   }
 
-  function pickDailyUnique(count) {
-    const pool = dailyQuestPool();
+  function uniqueFromPool(pool, count) {
     const out = [];
     const seen = new Set();
     for (const q of shuffle(pool)) {
-      if (q && q.id && !seen.has(q.id)) {
-        seen.add(q.id);
-        out.push(q);
-        if (out.length >= count) break;
-      }
+      if (!q?.id || seen.has(q.id)) continue;
+      seen.add(q.id);
+      out.push(q);
+      if (out.length >= count) break;
     }
-    if (out.length < count) {
-      for (const q of shuffle(allQuestionsDedup())) {
-        if (q && q.id && !seen.has(q.id)) {
-          seen.add(q.id);
-          out.push(q);
-          if (out.length >= count) break;
-        }
-      }
-    }
-    return out.slice(0, count);
+    return out;
+  }
+
+  function pickDailyUnique(count) {
+    return uniqueFromPool(dailyQuestPool(), count);
   }
   function shuffle(arr) {
     const a = [...arr];
@@ -1012,50 +2437,151 @@
     return a;
   }
 
-  function starOf(id) {
-    return Math.min(5, state.stars[id] || 0);
+  function baseQuestionId(id) {
+    return String(id || "").replace(/_(j|k|l|s|vc|rv)$/i, "");
   }
 
-  function addStar(id, delta) {
-    const cur = state.stars[id] || 0;
-    state.stars[id] = Math.max(0, Math.min(5, cur + delta));
+  function normalizeBombKeys(s) {
+    const next = {};
+    Object.entries(s.bombs || {}).forEach(([k, v]) => {
+      const b = baseQuestionId(k);
+      next[b] = Math.max(next[b] || 0, Math.min(5, v));
+    });
+    s.bombs = next;
   }
 
-  function registerWrong(id) {
-    state.wrongToday = Array.from(new Set([...(state.wrongToday || []), id]));
-    state.wrongCount[id] = (state.wrongCount[id] || 0) + 1;
+  function syncWrongToday() {
+    const d = ymd();
+    if (state.wrongTodayYmd !== d) {
+      state.wrongTodayYmd = d;
+      state.wrongToday = [];
+      state.wrongTodayItems = {};
+    }
+  }
+
+  function snapshotForReview(q, base) {
+    const kr = q.kr || q.answers?.[0] || "";
+    return {
+      id: base,
+      jp: q.jp,
+      kr,
+      answers: q.answers || (kr ? String(kr).split("|") : []),
+      type: q.type,
+      options: q.options ? [...q.options] : undefined,
+      scene: q.scene,
+      isKana: !!q.isKana,
+      romaji: q.romaji || "",
+      listenKo: q.listenKo,
+    };
+  }
+
+  function questionLookupMap() {
+    const map = {};
+    allQuestionsDedup().forEach((q) => {
+      map[q.id] = q;
+      map[baseQuestionId(q.id)] = q;
+    });
+    Object.values(state.wrongTodayItems || {}).forEach((q) => {
+      if (q?.id) map[baseQuestionId(q.id)] = q;
+    });
+    return map;
+  }
+
+  function poolReviewToday() {
+    syncWrongToday();
+    const items = state.wrongTodayItems || {};
+    const order = state.wrongToday || [];
+    const out = [];
+    const seen = new Set();
+    const lookup = questionLookupMap();
+    for (const base of order) {
+      if (!base || seen.has(base)) continue;
+      let q = items[base];
+      if (!q && lookup[base]) q = snapshotForReview(lookup[base], base);
+      if (q?.jp) {
+        seen.add(base);
+        out.push(q);
+      }
+    }
+    return out;
+  }
+
+  function bombOf(id) {
+    const base = baseQuestionId(id);
+    return Math.min(5, state.bombs[base] || 0);
+  }
+
+  function addBomb(id, delta) {
+    const base = baseQuestionId(id);
+    const cur = state.bombs[base] || 0;
+    state.bombs[base] = Math.max(0, Math.min(5, cur + delta));
+  }
+
+  function registerWrong(id, q) {
+    syncWrongToday();
+    const base = baseQuestionId(id);
+    state.wrongToday = Array.from(new Set([...(state.wrongToday || []), base]));
+    if (q?.jp) state.wrongTodayItems[base] = snapshotForReview(q, base);
+    state.wrongCount[base] = (state.wrongCount[base] || 0) + 1;
+    addBomb(base, 1);
+    if (session.isDaily) addMazeBombForWrong(base);
+    save();
+    renderQuestBlocks();
+    renderHomeStats();
   }
 
   function registerCorrect(id) {
-    addStar(id, -1);
+    addBomb(baseQuestionId(id), -1);
   }
 
   function reviewPool() {
     const ids = new Set();
-    (state.wrongToday || []).forEach((id) => ids.add(id));
-    Object.entries(state.stars).forEach(([id, n]) => {
-      if (n >= 3) ids.add(id);
+    poolReviewToday().forEach((q) => ids.add(baseQuestionId(q.id)));
+    Object.entries(state.bombs || {}).forEach(([id, n]) => {
+      if (n >= 3) ids.add(baseQuestionId(id));
     });
-    Object.entries(state.wrongCount).forEach(([id, c]) => {
-      if (c >= 3) ids.add(id);
+    Object.entries(state.wrongCount || {}).forEach(([id, c]) => {
+      if (c >= 3) ids.add(baseQuestionId(id));
     });
-    const all = allQuestionsDedup();
-    const map = Object.fromEntries(all.map((q) => [q.id, q]));
-    return [...ids].map((id) => map[id]).filter(Boolean);
+    const map = questionLookupMap();
+    return [...ids].map((id) => {
+      const hit = map[id];
+      return hit ? snapshotForReview(hit, id) : null;
+    }).filter(Boolean);
   }
 
-  /* Puzzle pieces per month */
-  function puzzleSize() {
-    return 20;
-  }
-
-  function ensurePuzzleMonth() {
-    const mk = monthKey();
-    if (state.puzzleMonth !== mk) {
-      state.puzzleMonth = mk;
-      state.puzzleFilled = 0;
-      save();
+  function ensureDailyStats() {
+    const d = ymd();
+    if (state.dailyStatsYmd !== d) {
+      state.dailyStatsYmd = d;
+      state.dailyAnswered = 0;
+      state.dailyCorrect = 0;
+    } else {
+      state.dailyAnswered = Math.min(10, state.dailyAnswered || 0);
+      state.dailyCorrect = Math.min(state.dailyAnswered, state.dailyCorrect || 0);
     }
+  }
+
+  function ensurePracticeStats() {
+    const d = ymd();
+    if (state.practiceStatsYmd !== d) {
+      state.practiceStatsYmd = d;
+      state.practiceAnswered = 0;
+      state.practiceCorrect = 0;
+    }
+  }
+
+  /** 학습·복습·단어장 — 빠른 기록과 별도, 오늘 연습 정확도만 */
+  function recordPracticeAttempt(correct) {
+    if (session.isDaily) return;
+    ensurePracticeStats();
+    state.practiceAnswered = (state.practiceAnswered || 0) + 1;
+    if (correct) state.practiceCorrect = (state.practiceCorrect || 0) + 1;
+    save();
+  }
+
+  function monthKeyFromDate(d) {
+    return `${d.getFullYear()}-${d.getMonth() + 1}`;
   }
 
   function updateStreakForActivity(d) {
@@ -1101,28 +2627,74 @@
   }
 
   function repairPuzzle() {
-    ensurePuzzleMonth();
+    const mk = monthKeyFromDate(calCursor);
+    const p = getPuzzleState(mk);
     if (state.coins < 100) {
       toast("코인이 부족해요 (100 필요)");
       return;
     }
-    const max = puzzleSize();
-    const empty = max - state.puzzleFilled;
-    if (empty <= 0) {
-      toast("채울 빈 칸이 없어요");
+    if (p.moves >= p.total) {
+      toast("이미 미로를 탈출했어요");
+      return;
+    }
+    if (hasBlockingMazeBomb(p)) {
+      toast("💣를 먼저 제거해 주세요 · 「오늘 틀린 문제」 복습");
       return;
     }
     state.coins -= 100;
-    state.puzzleFilled = Math.min(max, state.puzzleFilled + 1);
-    save();
+    revealPuzzleLetter(mk);
     renderAll();
-    toast("퍼즐 칸을 복구했어요 ✨");
+    toast("미로에서 한 칸 전진했어요 ✨");
   }
 
-  function recordAnswered() {
+  function syncQuestDay() {
+    const d = ymd();
+    if (state.questYmd !== d) {
+      state.questYmd = d;
+      state.questDone = 0;
+      state.questRewardYmd = "";
+      save();
+    }
+  }
+
+  function tryGrantDailyQuestRewards() {
+    const d = ymd();
+    syncQuestDay();
+    if (state.questRewardYmd === d) return;
+    if ((state.questDone || 0) < 10) return;
+    const p = getPuzzleState(monthKey());
+    if (unclearedMazeBombs(p).length > 0) {
+      toast("10문제 완료! 미로 💣 제거 → 학습 탭 「오늘 틀린 문제」");
+      renderQuestBlocks();
+      return;
+    }
+    state.questRewardYmd = d;
+    state.coins += 100;
+    state.attendance[d] = true;
+    updateStreakForActivity(d);
+    tryClaimMilestones();
+    toast("일일 퀘스트 100%! 코인 +100 · 출석 🎉");
+    save();
+    renderQuestBlocks();
+    renderHomeStats();
+  }
+
+  function questRemaining() {
+    syncQuestDay();
+    return Math.max(0, 10 - (state.questDone || 0));
+  }
+
+  /** 빠른 기록·월간 통계: 일일 퀘스트만, 하루 최대 10문제 */
+  function recordAttempt(correct) {
+    if (!session.isDaily) return;
+    syncQuestDay();
+    if ((state.questDone || 0) >= 10) return;
+    ensureDailyStats();
+    state.dailyAnswered = Math.min(10, (state.dailyAnswered || 0) + 1);
+    if (correct) state.dailyCorrect = Math.min(10, (state.dailyCorrect || 0) + 1);
     const mk = monthKey();
     state.monthAnswered[mk] = (state.monthAnswered[mk] || 0) + 1;
-    state.totalAnswered = (state.totalAnswered || 0) + 1;
+    if (correct) state.monthCorrect[mk] = (state.monthCorrect[mk] || 0) + 1;
     save();
   }
 
@@ -1130,41 +2702,75 @@
   function renderQuestBlocks() {
     const el = document.getElementById("questBlocks");
     el.innerHTML = "";
-    const d = ymd();
-    if (state.questYmd !== d) {
-      state.questYmd = d;
-      state.questDone = 0;
-      save();
-    }
-    const done = Math.min(10, state.questDone || 0);
+    syncQuestDay();
+    const p = getPuzzleState(monthKey());
+    const bombs = unclearedMazeBombs(p);
+    const bombsCleared = (p.bombs || []).filter((b) => b.cleared).length;
+    const qDone = Math.min(10, state.questDone || 0);
+    const totalUnits = 10 + bombs.length + bombsCleared;
+    const filledUnits = qDone + bombsCleared;
+    const pct = totalUnits ? Math.round((filledUnits / totalUnits) * 100) : 0;
     for (let i = 0; i < 10; i++) {
       const b = document.createElement("div");
-      b.className = "qblock" + (i < done ? " on" : "");
+      b.className = "qblock" + (i < qDone ? " on" : "");
       el.appendChild(b);
     }
-    document.getElementById("questPercent").textContent = `${done * 10}%`;
+    (p.bombs || []).forEach((b) => {
+      const block = document.createElement("div");
+      block.className = "qblock bomb" + (b.cleared ? " on" : "");
+      el.appendChild(block);
+    });
+    const pctEl = document.getElementById("questPercent");
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    const status = document.getElementById("questStatusLine");
+    if (status) {
+      if (pct >= 100) status.textContent = "오늘 일일 퀘스트 100% 완료! 🎉";
+      else if (qDone >= 10 && bombs.length > 0) {
+        status.textContent = `10문제 완료 · 💣 ${bombs.length}개 남음 · 학습 탭 복습으로 100%`;
+      } else {
+        status.textContent = `오늘 ${qDone}/10문제${bombs.length ? ` · 💣 ${bombs.length}` : ""}`;
+      }
+    }
+    renderDailyQuestButton();
+  }
+
+  function renderDailyQuestButton() {
+    const btn = document.getElementById("btnDailyQuest");
+    const hint = document.getElementById("dailyQuestHint");
+    if (!btn) return;
+    syncQuestDay();
+    const done = state.questDone || 0;
+    const left = questRemaining();
+    const p = getPuzzleState(monthKey());
+    const bombsLeft = unclearedMazeBombs(p).length;
+    const fullyDone = left <= 0 && bombsLeft === 0 && state.questRewardYmd === ymd();
+    if (fullyDone) {
+      btn.disabled = true;
+      btn.textContent = "오늘 퀘스트 100% ✓";
+      if (hint) hint.textContent = "내일 다시 10문제를 풀 수 있어요";
+    } else if (left <= 0 && bombsLeft > 0) {
+      btn.disabled = false;
+      btn.textContent = `💣 폭탄 제거 (${bombsLeft})`;
+      if (hint) hint.textContent = "10문제 완료 · 복습으로 💣 제거 후 100%";
+    } else if (done > 0) {
+      btn.disabled = false;
+      btn.textContent = `이어하기 (${done}/10)`;
+      if (hint) hint.textContent = `남은 ${left}문제 · 100% 완료 시 코인 +100 · 출석`;
+    } else {
+      btn.disabled = false;
+      btn.textContent = "일일 퀘스트 시작";
+      if (hint) hint.textContent = "하루 10문제만 · 100% 완료 시 코인 +100 · 출석";
+    }
   }
 
   function questAdvance() {
-    const d = ymd();
-    if (state.questYmd !== d) {
-      state.questYmd = d;
-      state.questDone = 0;
-    }
+    syncQuestDay();
     if (state.questDone < 10) {
       state.questDone++;
-      if (state.questDone === 10) {
-        state.coins += 5;
-        ensurePuzzleMonth();
-        const max = puzzleSize();
-        if (state.puzzleFilled < max) state.puzzleFilled++;
-        state.attendance[d] = true;
-        updateStreakForActivity(d);
-        tryClaimMilestones();
-        toast("퀘스트 완료! 코인 +5 · 퍼즐 +1 · 출석 반영 🎉");
-      }
       save();
       renderQuestBlocks();
+      renderHomeStats();
+      if (state.questDone === 10) tryGrantDailyQuestRewards();
     }
   }
 
@@ -1251,7 +2857,7 @@
       children: [
         { t: "자동 생성", subs: [
           { label: "오늘 틀린 문제", path: "review|today" },
-          { label: "별 3개 이상 문제", path: "review|stars" },
+          { label: "💣 3개 이상 문제", path: "review|stars" },
           { label: "자주 틀린 문제", path: "review|often" },
         ]},
       ],
@@ -1277,7 +2883,7 @@
           const b = document.createElement("button");
           b.type = "button";
           b.className = "link-btn";
-          b.innerHTML = `${item.label}<small>카드 슬라이드 · 선택·입력형</small>`;
+          b.innerHTML = `${item.label}<small>유형 랜덤 혼합</small>`;
           b.addEventListener("click", () => startSession(item.label, item.path, false));
           sub.appendChild(b);
         });
@@ -1293,39 +2899,265 @@
     });
   }
 
-  let session = { title: "", questions: [], idx: 0, isDaily: false };
+  let session = { title: "", path: "", questions: [], idx: 0, isDaily: false, isReview: false };
 
   function startSession(title, path, isDaily) {
     let pool = [];
     const allR = allQuestionsDedup();
-    if (path === "review|today") pool = allR.filter((q) => state.wrongToday.includes(q.id));
-    else if (path === "review|stars") pool = allR.filter((q) => starOf(q.id) >= 3);
-    else if (path === "review|often") pool = allR.filter((q) => (state.wrongCount[q.id] || 0) >= 3);
-    else if (path.startsWith("review")) pool = reviewPool();
+    const isReview = path.startsWith("review");
+    if (isDaily) {
+      syncQuestDay();
+      const left = questRemaining();
+      if (left <= 0) {
+        toast("오늘 일일 퀘스트 10문제를 모두 풀었어요. 내일 다시 도전해요!");
+        renderDailyQuestButton();
+        return;
+      }
+    }
+    if (path === "review|today") pool = poolReviewToday();
+    else if (path === "review|stars") {
+      const map = questionLookupMap();
+      pool = Object.entries(state.bombs || {})
+        .filter(([, n]) => n >= 3)
+        .map(([id]) => map[baseQuestionId(id)])
+        .filter(Boolean)
+        .map((q) => snapshotForReview(q, baseQuestionId(q.id)));
+    } else if (path === "review|often") {
+      const map = questionLookupMap();
+      pool = Object.entries(state.wrongCount || {})
+        .filter(([, c]) => c >= 3)
+        .map(([id]) => map[baseQuestionId(id)])
+        .filter(Boolean)
+        .map((q) => snapshotForReview(q, baseQuestionId(q.id)));
+    } else if (path.startsWith("review")) pool = reviewPool();
     else pool = poolByLearnPath(path);
 
     if (!pool.length) {
-      toast("아직 복습할 문제가 없어요. 학습을 조금 더 해봐요!");
+      toast(
+        path === "review|today"
+          ? "오늘 틀린 문제가 없어요. 일퀘·학습·연습·단어장 어디서든 틀리면 쌓여요."
+          : "아직 복습할 문제가 없어요. 학습을 조금 더 해봐요!"
+      );
       return;
     }
     session.title = title;
+    session.path = path || "";
+    const allowSit = state.level !== "beginner";
     if (isDaily) {
-      session.questions = pickDailyUnique(10);
-      if (session.questions.length < 10) {
-        toast("일일 퀘스트용 고유 문항이 10개 미만입니다.");
+      const left = questRemaining();
+      const raw = pickDailyUnique(left);
+      if (raw.length < left) {
+        toast("일일 퀘스트용 고유 문항이 부족합니다.");
         return;
       }
+      session.questions = prepareSessionQuestions(raw, { kanaOnly: false, allowSituation: allowSit });
+    } else if (path.startsWith("review")) {
+      session.questions = prepareSessionQuestions(pool, {
+        kanaOnly: false,
+        allowSituation: allowSit,
+      });
     } else {
-      session.questions = shuffle(pool);
+      const cap = Math.min(pool.length, path.startsWith("situ") ? 30 : 25);
+      const raw = uniqueFromPool(pool, cap);
+      session.questions = prepareSessionQuestions(raw, {
+        kanaOnly: isKanaPath(path),
+        allowSituation: allowSit && !path.startsWith("beginner|hira") && !path.startsWith("beginner|kata"),
+      });
     }
     session.idx = 0;
     session.isDaily = !!isDaily;
+    session.isReview = isReview;
     document.getElementById("sessionTitle").textContent = title;
-    document.getElementById("sessionSub").textContent = isDaily
-      ? "고유 10문제 · 같은 문제는 하루에 한 번만"
-      : `${session.questions.length}문제 세트`;
+    const lvLabel = state.level === "advanced" ? "고급" : state.level === "intermediate" ? "중급" : "초급(히라·가타)";
+    if (isDaily) {
+      const done = state.questDone || 0;
+      document.getElementById("sessionSub").textContent =
+        `${lvLabel} · 오늘 ${done}/10 · 이번 ${session.questions.length}문제 · Enter: 채점 → 다음`;
+    } else if (isReview) {
+      document.getElementById("sessionSub").textContent =
+        `${session.questions.length}문제 · 오늘 연습 정확도 · Enter: 뒤집기 → 다음`;
+    } else {
+      document.getElementById("sessionSub").textContent =
+        `${session.questions.length}문제 · 오늘 연습 정확도 · Enter: 뒤집기 → 다음`;
+    }
     renderSlides();
     document.getElementById("sessionOverlay").classList.add("show");
+    setTimeout(() => currentSlideWrap()?.focus(), 80);
+  }
+
+  function revealFlipCard(flipRoot, ok, answerText) {
+    const inner = flipRoot.querySelector(".flip-inner");
+    const msg = flipRoot.querySelector(".result-msg");
+    const backAns = flipRoot.querySelector(".back-answer");
+    if (backAns) backAns.textContent = answerText;
+    if (msg) {
+      msg.textContent = ok ? "✓ 맞았어요!" : "✗ 정답을 확인해 보세요";
+      msg.className = "result-msg " + (ok ? "ok" : "ng");
+    }
+    inner.classList.add("flipped", "locked");
+  }
+
+  function appendAnswerReveal(wrap, q, ok) {
+    const box = document.createElement("div");
+    box.style.marginTop = "12px";
+    box.style.padding = "12px";
+    box.style.borderRadius = "12px";
+    box.style.background = ok ? "#e8fff6" : "#fff0f3";
+    box.style.fontWeight = "700";
+    const kr = q.isKana ? formatAnswerLabel(q) : q.kr || q.answers?.join(" · ") || "";
+    box.textContent = `정답: ${q.jp}${kr ? " — " + kr : ""}`;
+    wrap.appendChild(box);
+  }
+
+  function formatAnswerLabel(q) {
+    if (q.isKana && q.romaji) return `${q.kr} (${q.romaji})`;
+    const a = q.answers || (q.kr ? [q.kr] : []);
+    return a.join(" · ");
+  }
+
+  function markSlideGraded(wrap) {
+    wrap.dataset.graded = "1";
+    wrap.dataset.answered = "1";
+  }
+
+  function slideScrollStep() {
+    const slides = document.getElementById("slides");
+    const slide = slides?.querySelector(".slide");
+    if (!slide || !slides) return slides?.clientWidth || 300;
+    const gap = 12;
+    return slide.offsetWidth + gap;
+  }
+
+  function currentSlideWrap() {
+    const slides = document.getElementById("slides");
+    if (!slides?.children.length) return null;
+    const step = slideScrollStep();
+    const i = Math.min(
+      slides.children.length - 1,
+      Math.max(0, Math.round(slides.scrollLeft / step))
+    );
+    return slides.children[i];
+  }
+
+  function goNextSlide() {
+    const slides = document.getElementById("slides");
+    if (!slides?.children.length) return;
+    const step = slideScrollStep();
+    const cur = Math.round(slides.scrollLeft / step) || 0;
+    if (cur >= slides.children.length - 1) return;
+    slides.scrollBy({ left: step, behavior: "smooth" });
+    setTimeout(() => currentSlideWrap()?.focus(), 320);
+  }
+
+  function handleSessionEnter(e) {
+    if (e.key !== "Enter") return;
+    const ov = document.getElementById("sessionOverlay");
+    if (!ov?.classList.contains("show")) return;
+    const wrap = currentSlideWrap();
+    if (!wrap) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (wrap.dataset.graded === "1") {
+      goNextSlide();
+      return;
+    }
+
+    const gradeBtn = wrap.querySelector("button.grade-btn:not(:disabled)");
+    if (gradeBtn) {
+      gradeBtn.click();
+      return;
+    }
+
+    if (wrap.querySelector(".choices button.choice:not(:disabled)")) {
+      toast("먼저 보기를 선택해 주세요");
+    }
+  }
+
+  function bindSlideEnter(wrap) {
+    wrap.tabIndex = 0;
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      handleSessionEnter(e);
+    });
+  }
+
+  function appendCatalogListen(wrap, jp) {
+    if (!jp) return;
+    const box = document.createElement("div");
+    box.className = "catalog-listen";
+    const play = document.createElement("button");
+    play.type = "button";
+    play.className = "secondary";
+    play.textContent = "▶ 듣기";
+    play.addEventListener("click", (e) => {
+      e.stopPropagation();
+      speakJa(jp);
+    });
+    box.appendChild(play);
+    wrap.appendChild(box);
+  }
+
+  function appendJp2krFlip(wrap, q) {
+    const answers = q.answers || (q.kr ? [q.kr] : []);
+    const backText = formatAnswerLabel(q);
+    const fc = document.createElement("div");
+    fc.className = "flip-card";
+    const sub = q.isKana ? "글자 읽기 (한글 또는 a, ka 형식)" : "뜻을 한국어로 입력";
+    fc.innerHTML = `<div class="flip-inner">
+      <div class="flip-face flip-front">
+        <div class="muted">일본어 → 한국어 뜻 입력</div>
+        <div class="jp-big">${escapeHtml(q.jp)}</div>
+      </div>
+      <div class="flip-face flip-back">
+        <div class="muted">정답</div>
+        <div class="back-answer" style="font-size:1.2rem;font-weight:700"></div>
+        <p class="result-msg"></p>
+      </div>
+    </div>`;
+    wrap.appendChild(fc);
+    const input = document.createElement("input");
+    input.className = "text-in";
+    input.placeholder = sub;
+    input.autocomplete = "off";
+    wrap.appendChild(input);
+    const btn = document.createElement("button");
+    btn.className = "grade-btn";
+    btn.textContent = "채점";
+    btn.style.marginTop = "8px";
+    const grade = () => {
+      if (input.disabled) return;
+      const isOk = checkAnswers(input.value, answers);
+      revealFlipCard(fc, isOk, backText);
+      input.disabled = true;
+      btn.disabled = true;
+      markSlideGraded(wrap);
+      if (isOk) {
+        toast("정답! Enter로 다음 문제");
+        registerCorrect(q.id);
+      } else {
+        toast("오답 · 💣+1 · Enter로 다음");
+        registerWrong(q.id, q);
+      }
+      finishQuestion(wrap, isOk);
+      renderQuestBlocks();
+      renderHomeStats();
+      wrap.focus();
+    };
+    btn.addEventListener("click", grade);
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.stopPropagation();
+      handleSessionEnter(e);
+    });
+    wrap.appendChild(btn);
+    bindSlideEnter(wrap);
+    const hint = document.createElement("p");
+    hint.className = "muted";
+    hint.style.marginTop = "6px";
+    hint.textContent = "Enter: 카드 뒤집기(채점) → Enter: 다음";
+    wrap.appendChild(hint);
   }
 
   function renderSlides() {
@@ -1335,66 +3167,48 @@
       const wrap = document.createElement("div");
       wrap.className = "slide";
       wrap.dataset.index = String(i);
-      const st = starOf(q.id);
+      const bt = bombOf(q.id);
       const head = document.createElement("div");
       head.className = "row between";
-      head.innerHTML = `<span class="muted">카드 ${i + 1}/${session.questions.length}</span><span class="stars" title="틀릴수록 별 증가">${"⭐".repeat(st)}${"☆".repeat(5 - st)}</span>`;
+      head.innerHTML = `<span class="muted">카드 ${i + 1}/${session.questions.length}</span><span class="bombs" title="틀릴수록 폭탄 증가">${"💣".repeat(bt)}${"○".repeat(5 - bt)}</span>`;
       wrap.appendChild(head);
 
-      if (q.type === "flip") {
-        const fc = document.createElement("div");
-        fc.className = "flip-card";
-        fc.innerHTML = `<div class="flip-inner"><div class="flip-face flip-front">${q.jp}<p class="muted" style="font-size:0.85rem;margin-top:8px;font-weight:500">탭해서 뒤집기</p></div><div class="flip-face flip-back">${q.kr}</div></div>`;
-        fc.querySelector(".flip-inner").addEventListener("click", function () {
-          this.classList.toggle("flipped");
-        });
-        wrap.appendChild(fc);
-        const hint = document.createElement("p");
-        hint.className = "muted";
-        hint.style.marginTop = "10px";
-        hint.textContent = "뒷면을 확인한 뒤, 뜻을 한국어로 적고 채점해 주세요.";
-        wrap.appendChild(hint);
-        const input = document.createElement("input");
-        input.className = "text-in";
-        input.placeholder = "뜻을 한국어로 입력";
-        input.autocomplete = "off";
-        wrap.appendChild(input);
-        const ok = document.createElement("button");
-        ok.textContent = "채점";
-        ok.style.marginTop = "8px";
-        ok.addEventListener("click", () => gradeFlip(q, input.value, wrap));
-        wrap.appendChild(ok);
-      } else if (q.type === "jp2kr") {
-        const lab = document.createElement("div");
-        lab.innerHTML = `<div class="muted">일본어 → 한국어 뜻 입력</div><div class="jp-big">${q.jp}</div>`;
-        wrap.appendChild(lab);
-        const input = document.createElement("input");
-        input.className = "text-in";
-        input.placeholder = "뜻을 입력";
-        wrap.appendChild(input);
-        const ok = document.createElement("button");
-        ok.textContent = "채점";
-        ok.style.marginTop = "10px";
-        ok.addEventListener("click", () => gradeJp2Kr(q, input.value, wrap));
-        wrap.appendChild(ok);
+      if (q.type === "flip" || q.type === "jp2kr") {
+        appendJp2krFlip(wrap, q);
       } else if (q.type === "kr2jp") {
         const top = document.createElement("div");
-        top.innerHTML = `<div class="muted">뜻 보고 일본어 고르기</div><div class="jp-big" style="font-size:1.15rem">${q.kr}</div>`;
+        const label = q.isKana ? "읽음 보고 글자 고르기" : "뜻 보고 일본어 고르기";
+        top.innerHTML = `<div class="muted">${label}</div><div class="jp-big" style="font-size:1.15rem">${escapeHtml(q.kr)}</div>`;
         wrap.appendChild(top);
         const ch = document.createElement("div");
         ch.className = "choices";
+        let answered = false;
         (q.options || []).forEach((opt) => {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "choice";
           b.textContent = opt;
-          b.addEventListener("click", () => gradeMc(q, opt === q.jp, wrap));
+          b.addEventListener("click", () => {
+            if (answered) return;
+            answered = true;
+            ch.querySelectorAll("button").forEach((x) => (x.disabled = true));
+            const isOk = opt === q.jp;
+            appendAnswerReveal(wrap, q, isOk);
+            markSlideGraded(wrap);
+            gradeMc(q, isOk, wrap);
+          });
           ch.appendChild(b);
         });
         wrap.appendChild(ch);
+        bindSlideEnter(wrap);
+        const h2 = document.createElement("p");
+        h2.className = "muted";
+        h2.style.marginTop = "6px";
+        h2.textContent = "선택 후 Enter: 다음";
+        wrap.appendChild(h2);
       } else if (q.type === "listen") {
         const top = document.createElement("div");
-        top.innerHTML = `<div class="muted">듣고 뜻 맞추기</div><div class="jp-big" style="font-size:1.1rem;color:var(--muted)">${q.jp}</div>`;
+        top.innerHTML = `<div class="muted">듣고 맞는 일본어 고르기</div><p class="muted" style="margin:6px 0 0">▶ 재생 후 들린 말과 같은 일본어를 고르세요</p>`;
         wrap.appendChild(top);
         const play = document.createElement("button");
         play.textContent = "▶ 일본어 재생";
@@ -1403,31 +3217,61 @@
         wrap.appendChild(play);
         const ch = document.createElement("div");
         ch.className = "choices";
+        let answered = false;
         (q.options || []).forEach((opt) => {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "choice";
           b.textContent = opt;
-          const ok = checkAnswers(opt, q.kr.split("|"));
-          b.addEventListener("click", () => gradeMc(q, ok, wrap));
+          b.style.fontSize = "1.1rem";
+          b.addEventListener("click", () => {
+            if (answered) return;
+            answered = true;
+            ch.querySelectorAll("button").forEach((x) => (x.disabled = true));
+            const isOk = opt === q.jp;
+            appendAnswerReveal(wrap, q, isOk);
+            markSlideGraded(wrap);
+            gradeMc(q, isOk, wrap);
+          });
           ch.appendChild(b);
         });
         wrap.appendChild(ch);
+        bindSlideEnter(wrap);
+        const h2b = document.createElement("p");
+        h2b.className = "muted";
+        h2b.style.marginTop = "6px";
+        h2b.textContent = "선택 후 Enter: 다음";
+        wrap.appendChild(h2b);
       } else if (q.type === "situation") {
         const top = document.createElement("div");
         top.innerHTML = `<div class="muted">상황에 맞는 표현 고르기</div><div style="font-weight:800;margin:8px 0">${q.scene}</div>`;
         wrap.appendChild(top);
         const ch = document.createElement("div");
         ch.className = "choices";
+        let answeredSit = false;
         (q.options || []).forEach((opt) => {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "choice";
           b.textContent = opt;
-          b.addEventListener("click", () => gradeMc(q, opt === q.jp, wrap));
+          b.addEventListener("click", () => {
+            if (answeredSit) return;
+            answeredSit = true;
+            ch.querySelectorAll("button").forEach((x) => (x.disabled = true));
+            const isOk = opt === q.jp;
+            appendAnswerReveal(wrap, q, isOk);
+            markSlideGraded(wrap);
+            gradeMc(q, isOk, wrap);
+          });
           ch.appendChild(b);
         });
         wrap.appendChild(ch);
+        bindSlideEnter(wrap);
+        const h2c = document.createElement("p");
+        h2c.className = "muted";
+        h2c.style.marginTop = "6px";
+        h2c.textContent = "선택 후 Enter: 다음";
+        wrap.appendChild(h2c);
       }
       slides.appendChild(wrap);
     });
@@ -1435,79 +3279,53 @@
 
   function gradeMc(q, ok, wrap) {
     if (ok) {
-      toast("정답! ⭐-1 (최소 0)");
+      toast("정답! 💣-1 (최소 0)");
       registerCorrect(q.id);
-      finishQuestion(wrap);
+      finishQuestion(wrap, true);
     } else {
-      toast("오답 · ⭐+1");
-      addStar(q.id, 1);
-      registerWrong(q.id);
-      finishQuestion(wrap);
+      toast("오답 · 💣+1");
+      registerWrong(q.id, q);
+      finishQuestion(wrap, false);
     }
     save();
     renderQuestBlocks();
     renderHomeStats();
+    if (wrap) wrap.focus();
   }
 
-  function gradeJp2Kr(q, val, wrap) {
-    const ok = checkAnswers(val, q.answers);
-    if (ok) {
-      toast("정답!");
-      registerCorrect(q.id);
-      finishQuestion(wrap);
-    } else {
-      toast("오답 · ⭐+1");
-      addStar(q.id, 1);
-      registerWrong(q.id);
-      finishQuestion(wrap);
-    }
-    save();
-    renderQuestBlocks();
-    renderHomeStats();
-  }
-
-  function gradeFlip(q, val, wrap) {
-    const accepted = q.answers && q.answers.length ? q.answers : q.kr ? [q.kr] : [];
-    const ok = checkAnswers(val, accepted);
-    if (ok) {
-      toast("정답!");
-      registerCorrect(q.id);
-      finishQuestion(wrap);
-    } else {
-      toast("오답 · ⭐+1");
-      addStar(q.id, 1);
-      registerWrong(q.id);
-      finishQuestion(wrap);
-    }
-    save();
-    renderQuestBlocks();
-    renderHomeStats();
-  }
-
-  function finishQuestion(wrap) {
-    recordAnswered();
-    updateStreakForActivity(ymd());
-    if (session.isDaily) questAdvance();
-    wrap.style.outline = "2px solid var(--mint-dark)";
-    renderHomeStats();
-    save();
-  }
-
-  document.getElementById("btnNextSlide").addEventListener("click", () => {
+  function finishQuestion(wrap, correct) {
     const slides = document.getElementById("slides");
-    const w = slides.clientWidth;
-    slides.scrollBy({ left: w * 0.88, behavior: "smooth" });
-  });
+    const step = slideScrollStep();
+    const i = Math.min(
+      (session.questions?.length || 1) - 1,
+      Math.max(0, Math.round(slides.scrollLeft / step))
+    );
+    const q = session.questions[i];
+    recordAttempt(!!correct);
+    recordPracticeAttempt(!!correct);
+    trackLearnQuestion(session.path, session.title);
+    if (session.isDaily) questAdvance();
+    if (session.isReview && correct && q?.id) clearMazeBomb(q.id);
+    wrap.style.outline = correct ? "2px solid var(--mint-dark)" : "2px solid var(--pink-deep)";
+    renderHomeStats();
+    renderDailyQuestButton();
+    save();
+  }
+
+  document.getElementById("btnNextSlide").addEventListener("click", goNextSlide);
+  document.getElementById("sessionOverlay").addEventListener("keydown", handleSessionEnter);
 
   document.getElementById("btnWrong").addEventListener("click", () => {
     const slides = document.getElementById("slides");
-    const i = Math.round(slides.scrollLeft / (slides.clientWidth * 0.88)) || 0;
+    const step = slideScrollStep();
+    const i = Math.min(
+      (session.questions?.length || 1) - 1,
+      Math.max(0, Math.round(slides.scrollLeft / step))
+    );
     const q = session.questions[i];
     if (!q) return;
-    addStar(q.id, 1);
-    registerWrong(q.id);
-    save();
-    toast("오답 처리 · ⭐+1");
+    registerWrong(q.id, q);
+    toast("오답 처리 · 💣+1");
     renderSlides();
     renderHomeStats();
   });
@@ -1517,7 +3335,20 @@
   });
 
   document.getElementById("btnDailyQuest").addEventListener("click", () => {
-    startSession("일일 퀘스트", "beginner|hira", true);
+    syncQuestDay();
+    const p = getPuzzleState(monthKey());
+    if ((state.questDone || 0) >= 10 && unclearedMazeBombs(p).length > 0) {
+      switchToTab("learn");
+      startSession("오늘 틀린 문제 (💣 제거)", "review|today", false, true);
+      return;
+    }
+    const path =
+      state.level === "advanced"
+        ? "advanced|mix|all"
+        : state.level === "intermediate"
+          ? "intermediate|mix|all"
+          : "beginner|mix|all";
+    startSession("일일 퀘스트", path, true);
   });
 
   /* Level */
@@ -1537,54 +3368,366 @@
     });
   }
 
+  function switchToTab(tabId) {
+    document.querySelectorAll(".tab").forEach((x) => {
+      x.classList.toggle("active", x.getAttribute("data-tab") === tabId);
+    });
+    document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+    const screen = document.getElementById("screen-" + tabId);
+    if (screen) screen.classList.add("active");
+    if (tabId === "cal") {
+      renderCalendar();
+      renderMascotShop();
+    }
+    if (tabId === "learn") renderLearnDailyQuote();
+    if (tabId === "vocab") renderWordCatalog();
+  }
+
+  function startCatalogStudy() {
+    const groups = catalogGroupsCache || buildCatalogGroups();
+    const g = groups[catalogGroupIndex];
+    if (!g?.items?.length) {
+      toast("학습할 항목이 없어요");
+      return;
+    }
+    switchToTab("learn");
+    if (g.vocabIndex != null) startVocabStudy(g.vocabIndex);
+    else if (g.path) startSession(g.label, g.path, false);
+  }
+
   /* Tabs */
   document.querySelectorAll(".tab").forEach((t) => {
-    t.addEventListener("click", () => {
-      const id = t.getAttribute("data-tab");
-      document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
-      document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
-      document.getElementById("screen-" + id).classList.add("active");
-      if (id === "cal") renderCalendar();
-    });
+    t.addEventListener("click", () => switchToTab(t.getAttribute("data-tab")));
   });
 
   function renderHomeStats() {
     document.getElementById("coinDisplay").textContent = String(state.coins || 0);
-    document.getElementById("streakDisplay").textContent = String(state.streak || 0);
+    const streakEl = document.getElementById("streakDisplay");
+    if (streakEl) streakEl.textContent = String(state.streak || 0);
+    renderDailyQuestButton();
     const mk = monthKey();
-    document.getElementById("monthQs").textContent = String(state.monthAnswered[mk] || 0);
-    const todayCorrectGuess = state.questDone || 0;
-    document.getElementById("todayCorrect").textContent = String(Math.min(10, todayCorrectGuess));
-    document.getElementById("reviewCount").textContent = String(reviewPool().length);
-    const m = state.totalAnswered || 0;
-    document.getElementById("distLine").textContent = `${m}m 달림`;
-    const pct = Math.min(100, m % 200) / 2;
-    document.getElementById("trackFill").style.width = pct + "%";
+    const track = monthTrackProgress();
+    const distEl = document.getElementById("distLine");
+    if (distEl) distEl.textContent = `이번 달 ${track.count}/${track.total}일`;
+    const fillEl = document.getElementById("trackFill");
+    if (fillEl) fillEl.style.width = track.pct + "%";
     const today = new Date();
     const wk = ["일", "월", "화", "수", "목", "금", "토"];
     document.getElementById("todayLine").textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 (${wk[today.getDay()]})`;
+    renderQuotePuzzle(mk, "homeQuotePuzzle", "homePuzzleMonth");
+    applyMascotDisplay();
+    renderMascotShop();
   }
 
   function renderAll() {
-    ensurePuzzleMonth();
     renderQuestBlocks();
     renderHomeStats();
     syncLevelUI();
     buildLearnAcc();
+    renderLearnDailyQuote();
     renderVocabList();
+    renderWordCatalog();
     renderCalendar();
-    renderMilestones();
+    applyMascotDisplay();
+    renderMascotShop();
+  }
+
+  function catalogKrLabel(q) {
+    if (q.isKana && q.romaji) return `${q.kr || ""} (${q.romaji})`.replace(/^ \(\)/, "");
+    const a = q.answers || (q.kr ? [q.kr] : []);
+    const raw = a[0] || q.kr || "";
+    return String(raw).split("|")[0] || "—";
+  }
+
+  function catalogScrollStep() {
+    const el = getCatalogSlidesEl();
+    const slide = el?.querySelector(".catalog-slide");
+    if (!slide) return el?.clientWidth || 300;
+    return slide.offsetWidth;
+  }
+
+  function goCatalogNext() {
+    const el = getCatalogSlidesEl();
+    const groups = catalogGroupsCache || [];
+    const g = groups[catalogGroupIndex];
+    if (!el || !g?.items?.length) return;
+    const i = catalogScrollIndex();
+    if (i >= g.items.length - 1) return;
+    el.scrollBy({ left: catalogScrollStep(), behavior: "smooth" });
+    setTimeout(focusCatalogSlide, 320);
+  }
+
+  function focusCatalogSlide() {
+    const el = getCatalogSlidesEl();
+    if (!el) return;
+    const slides = el.querySelectorAll(".catalog-slide");
+    const i = catalogScrollIndex();
+    const slide = slides[i];
+    if (slide) slide.focus();
+  }
+
+  function catalogJpHtml(item) {
+    const jp = item.jp || "";
+    const reading = item.reading || "";
+    const readLine = reading
+      ? `<div class="catalog-reading">${escapeHtml(reading)}</div>`
+      : "";
+    return `<div class="catalog-jp">${escapeHtml(jp)}</div>${readLine}`;
+  }
+
+  function appendCatalogSlide(track, item, withListen) {
+    const slide = document.createElement("div");
+    slide.className = "catalog-slide";
+    slide.tabIndex = 0;
+
+    const area = document.createElement("div");
+    area.className = "catalog-card-area";
+
+    const card = document.createElement("div");
+    card.className = "studied-card catalog-card";
+    const kr = item.kr || "—";
+    const src = item.source ? `<span class="studied-src">${escapeHtml(item.source)}</span>` : "";
+    card.innerHTML = `<div class="studied-inner">
+      <div class="studied-face studied-front">${catalogJpHtml(item)}</div>
+      <div class="studied-face studied-back"><div class="catalog-jp" style="font-size:1.15rem">${escapeHtml(kr)}</div>${src}</div>
+    </div>`;
+    const inner = card.querySelector(".studied-inner");
+    const flip = () => {
+      const willFlip = !inner.classList.contains("flipped");
+      inner.classList.toggle("flipped");
+      if (willFlip && slide.dataset.viewed !== "1") {
+        slide.dataset.viewed = "1";
+        trackVocabBrowse(item.source || "기타");
+      }
+    };
+    const isFlipped = () => inner.classList.contains("flipped");
+
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".catalog-listen")) return;
+      flip();
+    });
+
+    slide.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" || e.target.closest(".catalog-listen")) return;
+      e.preventDefault();
+      if (!isFlipped()) {
+        flip();
+        return;
+      }
+      goCatalogNext();
+    });
+
+    area.appendChild(card);
+    slide.appendChild(area);
+    if (withListen && item.jp) appendCatalogListen(slide, item.jp);
+    const hint = document.createElement("p");
+    hint.className = "catalog-hint";
+    hint.textContent = "Enter: 뜻 · Enter: 다음";
+    slide.appendChild(hint);
+    track.appendChild(slide);
+  }
+
+  let catalogGroupIndex = 0;
+  let catalogGroupsCache = null;
+
+  function buildCatalogGroups() {
+    const groups = [];
+    WORD_CATALOG.forEach((group) => {
+      const items = entriesForCatalogGroup(group);
+      if (items.length) groups.push({ label: group.label, path: group.path, vocabIndex: null, items });
+    });
+    (state.vocabBooks || []).forEach((book, bi) => {
+      if (!book.items?.length) return;
+      groups.push({
+        label: "📒 " + book.name,
+        path: null,
+        vocabIndex: bi,
+        items: book.items.map((it) => ({
+          jp: it.jp,
+          kr: String(it.kr).split("|")[0],
+          source: book.name,
+        })),
+      });
+    });
+    return groups;
+  }
+
+  function getCatalogSlidesEl() {
+    return document.getElementById("catalogSlides");
+  }
+
+  function catalogScrollIndex() {
+    const el = getCatalogSlidesEl();
+    const step = catalogScrollStep();
+    if (!el || !step) return 0;
+    return Math.round(el.scrollLeft / step) || 0;
+  }
+
+  function updateCatalogProg() {
+    const prog = document.getElementById("catalogProg");
+    const groups = catalogGroupsCache || [];
+    const g = groups[catalogGroupIndex];
+    if (!prog || !g) return;
+    const total = g.items.length;
+    const i = catalogScrollIndex();
+    prog.textContent = total ? `${Math.min(i + 1, total)} / ${total}` : "0 / 0";
+  }
+
+  function renderCatalogSlides() {
+    const track = getCatalogSlidesEl();
+    if (!track) return;
+    catalogGroupsCache = buildCatalogGroups();
+    const groups = catalogGroupsCache;
+    if (!groups.length) {
+      track.innerHTML = '<p class="muted">항목이 없어요</p>';
+      return;
+    }
+    if (catalogGroupIndex >= groups.length) catalogGroupIndex = 0;
+    const g = groups[catalogGroupIndex];
+    track.innerHTML = "";
+    g.items.forEach((it) => appendCatalogSlide(track, it, true));
+    track.scrollLeft = 0;
+    updateCatalogProg();
+    track.onscroll = () => {
+      updateCatalogProg();
+      track.querySelectorAll(".catalog-slide .studied-inner.flipped").forEach((inner) => {
+        inner.classList.remove("flipped");
+      });
+    };
+    setTimeout(focusCatalogSlide, 50);
+  }
+
+  function renderCatalogCats() {
+    const box = document.getElementById("catalogCats");
+    if (!box) return;
+    catalogGroupsCache = buildCatalogGroups();
+    const groups = catalogGroupsCache;
+    box.innerHTML = "";
+    groups.forEach((g, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "catalog-cat" + (i === catalogGroupIndex ? " on" : "");
+      b.textContent = `${g.label} (${g.items.length})`;
+      b.addEventListener("click", () => {
+        catalogGroupIndex = i;
+        renderCatalogCats();
+        renderCatalogSlides();
+        const study = document.getElementById("catalogStudyBtn");
+        if (study) study.style.display = groups[i].items.length ? "" : "none";
+      });
+      box.appendChild(b);
+    });
+  }
+
+  const WORD_CATALOG = [
+    { label: "히라가나", path: "beginner|hira", keys: ["beginner_hira"] },
+    { label: "가타카나", path: "beginner|kata", keys: ["beginner_kata"] },
+    { label: "숫자", path: "beginner|num", keys: ["beginner_num"] },
+    { label: "요일·시간", path: "beginner|mix|wt", keys: ["beginner_week", "beginner_time"] },
+    { label: "인사·기초 단어", path: "beginner|mix|gw", keys: ["beginner_greet", "beginner_word"] },
+    { label: "조사·문장", path: "intermediate|part", keys: ["int_part", "int_make"] },
+    { label: "동사·표현", path: "intermediate|verb", keys: ["int_verb", "int_talk"] },
+    { label: "읽기·회화", path: "intermediate|read", keys: ["int_read"] },
+    { label: "뉴스·경어·비즈", path: "advanced|mix|all", keys: ["adv_news", "adv_keigo", "adv_natural", "adv_real", "adv_biz"] },
+    { label: "상황·식당·여행", path: "situ|mix|travel", keys: ["scene_rest_mid", "scene_rest_adv", "scene_travel_mid", "scene_travel_adv", "scene_rest", "scene_travel"] },
+    { label: "상황·쇼핑·편의점", path: "situ|mix|shop", keys: ["scene_store_mid", "scene_store_adv", "scene_shop_mid", "scene_shop_adv", "scene_store", "scene_shop"] },
+    { label: "상황·병원·길안내", path: "situ|mix|life", keys: ["scene_hospital_mid", "scene_hospital_adv", "scene_ask_mid", "scene_ask_adv", "scene_bath_mid", "scene_bath_adv", "scene_hospital", "scene_ask", "scene_bath"] },
+  ];
+
+  function entriesForCatalogGroup(group) {
+    const seen = new Set();
+    const items = [];
+    for (const key of group.keys) {
+      for (const q of BANK[key] || []) {
+        if (!q?.jp || seen.has(q.jp)) continue;
+        seen.add(q.jp);
+        items.push({
+          jp: q.jp,
+          kr: catalogKrLabel(q),
+          reading: catalogItemReading(q.jp, q),
+          source: group.label,
+        });
+      }
+    }
+    return items;
+  }
+
+  function renderWordCatalog() {
+    const box = document.getElementById("wordCatalog");
+    if (!box) return;
+    if (!box.dataset.built) {
+      box.dataset.built = "1";
+      box.innerHTML = `
+        <div class="catalog-layout">
+          <div class="catalog-cats" id="catalogCats"></div>
+          <div class="catalog-main">
+            <div class="catalog-slides" id="catalogSlides"></div>
+            <div class="catalog-nav">
+              <button type="button" class="secondary" id="catalogPrev">◀</button>
+              <span class="catalog-prog" id="catalogProg">1 / 1</span>
+              <button type="button" class="secondary" id="catalogNext">▶</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="link-btn" id="catalogStudyBtn" style="width:100%;margin-top:8px;">이 주제로 학습하기 →</button>`;
+      document.getElementById("catalogPrev").addEventListener("click", () => {
+        const el = getCatalogSlidesEl();
+        if (el) {
+          el.scrollBy({ left: -catalogScrollStep(), behavior: "smooth" });
+          setTimeout(focusCatalogSlide, 320);
+        }
+      });
+      document.getElementById("catalogNext").addEventListener("click", () => {
+        goCatalogNext();
+      });
+      document.getElementById("catalogStudyBtn").addEventListener("click", startCatalogStudy);
+    }
+    renderCatalogCats();
+    renderCatalogSlides();
+    const groups = catalogGroupsCache || [];
+    const study = document.getElementById("catalogStudyBtn");
+    if (study) study.style.display = groups.length ? "" : "none";
   }
 
   /* Vocab */
+  function startVocabStudy(index) {
+    const book = state.vocabBooks[index];
+    if (!book?.items?.length) {
+      toast("단어를 먼저 추가해 주세요");
+      return;
+    }
+    const raw = book.items.map((it, i) => ({
+      id: `vb${index}_${i}`,
+      jp: it.jp,
+      kr: it.kr,
+      answers: String(it.kr).split("|"),
+    }));
+    document.getElementById("vocabOverlay").classList.remove("show");
+    session.title = book.name + " 학습";
+    session.path = `vocab|book:${book.name}`;
+    session.questions = prepareSessionQuestions(raw, { kanaOnly: false, allowSituation: false });
+    session.idx = 0;
+    session.isDaily = false;
+    session.isReview = false;
+    document.getElementById("sessionTitle").textContent = session.title;
+    document.getElementById("sessionSub").textContent = `${session.questions.length}개 · 오늘 연습`;
+    renderSlides();
+    document.getElementById("sessionOverlay").classList.add("show");
+    setTimeout(() => currentSlideWrap()?.focus(), 80);
+  }
+
   function renderVocabList() {
     const box = document.getElementById("vocabList");
     box.innerHTML = "";
+    if (!(state.vocabBooks || []).length) {
+      box.innerHTML = '<p class="muted" style="margin:0;">+ 새 단어장으로 추가해 보세요</p>';
+      return;
+    }
     (state.vocabBooks || []).forEach((book, bi) => {
       const el = document.createElement("div");
       el.className = "v-item";
-      el.innerHTML = `<div class="row between"><h3>${escapeHtml(book.name)}</h3><button class="secondary" data-open="${bi}" type="button">열기</button></div><div class="tag">${book.items.length}개 항목</div>`;
-      el.querySelector("button").addEventListener("click", () => openVocabBook(bi));
+      el.innerHTML = `<div class="row between"><h3>${escapeHtml(book.name)}</h3><button class="secondary" data-open="${bi}" type="button">관리</button></div><div class="tag">${book.items.length}개 · 위에서 📒 주제 선택 후 학습</div>`;
+      el.querySelector("[data-open]").addEventListener("click", () => openVocabBook(bi));
       box.appendChild(el);
     });
   }
@@ -1599,6 +3742,7 @@
     state.vocabBooks.push({ name, items: [] });
     save();
     renderVocabList();
+    renderWordCatalog();
   });
 
   function openVocabBook(index) {
@@ -1670,6 +3814,189 @@
 
   /* Calendar */
   let calCursor = new Date();
+  let calFocusDate = new Date();
+  let calTrendMode = "today";
+
+  function ensureStudyTrendDay(d = ymd()) {
+    if (!state.studyTrendByYmd) state.studyTrendByYmd = {};
+    if (!state.studyTrendByYmd[d]) {
+      state.studyTrendByYmd[d] = { vocabViews: 0, learnCount: 0, learnByPath: {} };
+    }
+    const t = state.studyTrendByYmd[d];
+    if (!t.learnByPath) t.learnByPath = {};
+    return t;
+  }
+
+  function shortLearnLabel(path, title) {
+    if (!path) return title || "학습";
+    if (path.startsWith("review")) return "복습";
+    if (path.startsWith("beginner")) return "초급";
+    if (path.startsWith("intermediate")) return "중급";
+    if (path.startsWith("advanced")) return "고급";
+    if (path.startsWith("situ")) return "상황";
+    if (path.startsWith("vocab|")) return "단어장 학습";
+    return title || path;
+  }
+
+  function trackLearnQuestion(path, title) {
+    const t = ensureStudyTrendDay(ymd());
+    t.learnCount += 1;
+    const k = shortLearnLabel(path, title);
+    t.learnByPath[k] = (t.learnByPath[k] || 0) + 1;
+    save();
+  }
+
+  function trackVocabBrowse(source) {
+    const t = ensureStudyTrendDay(ymd());
+    t.vocabViews += 1;
+    const k = `📒 ${source || "단어장"}`;
+    t.learnByPath[k] = (t.learnByPath[k] || 0) + 1;
+    save();
+  }
+
+  function renderCalendarTrend() {
+    const box = document.getElementById("calTrend");
+    if (!box) return;
+    const y = calCursor.getFullYear();
+    const m = calCursor.getMonth() + 1;
+    let labels = [];
+    let vocab = [];
+    let learn = [];
+    if (calTrendMode === "today") {
+      const d = new Date();
+      const key = ymd(d);
+      const t = (state.studyTrendByYmd || {})[key] || { vocabViews: 0, learnCount: 0 };
+      labels.push("오늘");
+      vocab.push(t.vocabViews || 0);
+      learn.push(t.learnCount || 0);
+    } else if (calTrendMode === "week") {
+      const anchor = new Date(calFocusDate);
+      const start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - anchor.getDay());
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const key = ymd(d);
+        const t = (state.studyTrendByYmd || {})[key] || { vocabViews: 0, learnCount: 0 };
+        labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+        vocab.push(t.vocabViews || 0);
+        learn.push(t.learnCount || 0);
+      }
+    } else {
+      const last = new Date(y, m, 0).getDate();
+      for (let d = 1; d <= last; d++) {
+        const key = `${y}-${m}-${d}`;
+        const t = (state.studyTrendByYmd || {})[key] || { vocabViews: 0, learnCount: 0 };
+        labels.push(String(d));
+        vocab.push(t.vocabViews || 0);
+        learn.push(t.learnCount || 0);
+      }
+    }
+    const n = labels.length;
+    const maxY = Math.max(1, ...vocab, ...learn);
+    const w = 320;
+    const h = 120;
+    const px = 18;
+    const py = 10;
+    const gw = w - px * 2;
+    const gh = h - py * 2;
+    const xOf = (i) => px + (n <= 1 ? 0 : (i / (n - 1)) * gw);
+    const yOf = (v) => py + (1 - v / maxY) * gh;
+    const poly = (arr) => arr.map((v, i) => `${xOf(i)},${yOf(v)}`).join(" ");
+    const step = Math.max(1, Math.round(n / 6));
+    const xLabels = [];
+    for (let i = 0; i < n; i += step) {
+      xLabels.push(`<text x="${xOf(i)}" y="${h - 1}" text-anchor="middle" font-size="7" fill="#8b839e">${labels[i]}</text>`);
+    }
+    if (n > 0 && (xLabels.length === 0 || !xLabels[xLabels.length - 1].includes(`>${labels[n - 1]}<`))) {
+      xLabels.push(`<text x="${xOf(n - 1)}" y="${h - 1}" text-anchor="middle" font-size="7" fill="#8b839e">${labels[n - 1]}</text>`);
+    }
+    const yGuides = [0, maxY].map((v) =>
+      `<line x1="${px}" y1="${yOf(v)}" x2="${w - px}" y2="${yOf(v)}" stroke="#ece6ff" stroke-width="1"/>`
+    ).join("");
+    const vocabPoints = vocab.map((v, i) => `<circle cx="${xOf(i)}" cy="${yOf(v)}" r="${n <= 1 ? 3.2 : 2.1}" fill="#8b5cf6"/>`).join("");
+    const learnPoints = learn.map((v, i) => `<circle cx="${xOf(i)}" cy="${yOf(v)}" r="${n <= 1 ? 3.2 : 2.1}" fill="#ec4899"/>`).join("");
+    const totalVocab = vocab.reduce((a, b) => a + b, 0);
+    const totalLearn = learn.reduce((a, b) => a + b, 0);
+    let detail = "";
+    if (calTrendMode === "today") {
+      const t = (state.studyTrendByYmd || {})[ymd()] || { learnByPath: {} };
+      const top = Object.entries(t.learnByPath || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([k, v]) => `${k} ${v}`)
+        .join(" · ");
+      detail = `<div class="trend-foot">오늘 단어장 ${totalVocab}개 · 학습 ${totalLearn}문제${top ? ` · ${top}` : ""}</div>`;
+    } else {
+      detail = `<div class="trend-foot">단어장 합계 ${totalVocab}개 · 학습 합계 ${totalLearn}문제</div>`;
+    }
+    let chartHtml = `
+        <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="월간 공부 추이 그래프">
+          ${yGuides}
+          <polyline fill="none" stroke="#8b5cf6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${poly(vocab)}"/>
+          <polyline fill="none" stroke="#ec4899" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${poly(learn)}"/>
+          ${vocabPoints}
+          ${learnPoints}
+          ${xLabels.join("")}
+        </svg>`;
+    if (calTrendMode === "today") {
+      const tV = vocab[0] || 0;
+      const tL = learn[0] || 0;
+      const bW = 44;
+      const g = 56;
+      const baseY = h - 18;
+      const barMaxH = h - 40;
+      const toH = (v) => (maxY ? (v / maxY) * barMaxH : 0);
+      const vH = toH(tV);
+      const lH = toH(tL);
+      const x1 = w / 2 - g;
+      const x2 = w / 2 + 12;
+      chartHtml = `
+        <svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="오늘 공부 막대그래프">
+          <line x1="${px}" y1="${baseY}" x2="${w - px}" y2="${baseY}" stroke="#ece6ff" stroke-width="1.5"/>
+          <rect x="${x1}" y="${baseY - vH}" width="${bW}" height="${vH}" rx="6" fill="#8b5cf6"/>
+          <rect x="${x2}" y="${baseY - lH}" width="${bW}" height="${lH}" rx="6" fill="#ec4899"/>
+          <text x="${x1 + bW / 2}" y="${baseY - vH - 6}" text-anchor="middle" font-size="10" fill="#6a4ed8" font-weight="700">${tV}</text>
+          <text x="${x2 + bW / 2}" y="${baseY - lH - 6}" text-anchor="middle" font-size="10" fill="#d93681" font-weight="700">${tL}</text>
+          <text x="${x1 + bW / 2}" y="${h - 4}" text-anchor="middle" font-size="9" fill="#8b839e">단어장</text>
+          <text x="${x2 + bW / 2}" y="${h - 4}" text-anchor="middle" font-size="9" fill="#8b839e">학습</text>
+        </svg>`;
+    }
+    box.innerHTML = `
+      <div class="trend-graph-wrap">
+        <div class="trend-mode">
+          <button type="button" data-trend-mode="today" class="${calTrendMode === "today" ? "on" : ""}">오늘</button>
+          <button type="button" data-trend-mode="week" class="${calTrendMode === "week" ? "on" : ""}">주별</button>
+          <button type="button" data-trend-mode="month" class="${calTrendMode === "month" ? "on" : ""}">달별</button>
+        </div>
+        <div class="trend-graph-head">
+          <span>${
+            calTrendMode === "today"
+              ? "오늘"
+              : calTrendMode === "week"
+                ? "선택 주(일~토)"
+                : `${m}월`
+          } 공부 추이</span>
+          <span class="trend-legend">
+            <span class="vocab"><i></i>단어장</span>
+            <span class="learn"><i></i>학습</span>
+          </span>
+        </div>
+        ${chartHtml}
+        <div class="trend-foot">x축: 날짜 · y축: 문제/카드 수${
+          calTrendMode === "today"
+            ? " · 오늘 막대 그래프"
+            : calTrendMode === "week"
+              ? " · 선택 날짜 포함 주간"
+              : ""
+        }</div>
+        ${detail}
+      </div>`;
+    box.querySelectorAll("[data-trend-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        calTrendMode = btn.getAttribute("data-trend-mode") || "today";
+        renderCalendarTrend();
+      });
+    });
+  }
 
   function renderCalendar() {
     const y = calCursor.getFullYear();
@@ -1694,6 +4021,10 @@
       days.appendChild(e);
     }
     const today = new Date();
+    if (calFocusDate.getFullYear() !== y || calFocusDate.getMonth() !== m) {
+      const day = Math.min(calFocusDate.getDate(), lastDate);
+      calFocusDate = new Date(y, m, day);
+    }
     for (let d = 1; d <= lastDate; d++) {
       const cell = document.createElement("div");
       cell.className = "cal-cell";
@@ -1701,20 +4032,18 @@
       const key = `${y}-${m + 1}-${d}`;
       if (state.attendance[key]) cell.classList.add("done");
       if (y === today.getFullYear() && m === today.getMonth() && d === today.getDate()) cell.classList.add("today");
+      if (y === calFocusDate.getFullYear() && m === calFocusDate.getMonth() && d === calFocusDate.getDate()) {
+        cell.classList.add("selected");
+      }
+      cell.addEventListener("click", () => {
+        calFocusDate = new Date(y, m, d);
+        if (calTrendMode === "week") renderCalendarTrend();
+        renderCalendar();
+      });
       days.appendChild(cell);
     }
 
-    ensurePuzzleMonth();
-    const pz = document.getElementById("puzzleGrid");
-    pz.innerHTML = "";
-    const max = puzzleSize();
-    for (let i = 0; i < max; i++) {
-      const c = document.createElement("div");
-      c.className = "pcell" + (i < state.puzzleFilled ? " filled" : "");
-      c.textContent = i < state.puzzleFilled ? "🧩" : "";
-      pz.appendChild(c);
-    }
-    document.getElementById("puzzleProg").textContent = `진행: ${state.puzzleFilled}/${max} · 완성 시 특별 배경·꾸미기·칭호(연동 예정)`;
+    renderCalendarTrend();
   }
 
   document.getElementById("calPrev").addEventListener("click", () => {
@@ -1725,27 +4054,6 @@
     calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1);
     renderCalendar();
   });
-
-  document.getElementById("btnRepair").addEventListener("click", repairPuzzle);
-
-  function renderMilestones() {
-    const box = document.getElementById("milestoneBox");
-    box.innerHTML = "";
-    const rows = [
-      { k: "d3", label: "3일 연속 (+10)", need: 3 },
-      { k: "d7", label: "7일 연속 (+20)", need: 7 },
-      { k: "d14", label: "14일 연속 (+30)", need: 14 },
-      { k: "d30", label: "30일 연속 (+40)", need: 30 },
-    ];
-    rows.forEach((r) => {
-      const p = document.createElement("p");
-      const claimed = state.milestones[r.k];
-      const ok = (state.streak || 0) >= r.need;
-      p.className = "muted";
-      p.textContent = `${r.label} · ${claimed ? "수령 완료" : ok ? "조건 달성(자동 지급됨)" : "진행 중"}`;
-      box.appendChild(p);
-    });
-  }
 
   bindLevelButtons("#homeLevel");
 
