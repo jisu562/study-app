@@ -743,6 +743,11 @@
         <h2 style="margin:0 0 6px">이번 달 명언 미로</h2>
         <p class="puzzle-month-label" id="homePuzzleMonth"></p>
         <div class="quote-puzzle" id="homeQuotePuzzle"></div>
+        <div class="cal-reward-small" style="margin-top:10px;">
+          <strong>연속 출석 보상</strong><br />
+          3일 10코인 · 7일 20코인 · 14일 30코인 · 30일 40코인<br />
+          합계 최대 100코인 · 연속 출석 달성 시 자동 지급
+        </div>
       </div>
 
       <div class="card">
@@ -796,11 +801,6 @@
         <div class="cal-grid" id="calWeek"></div>
         <div class="cal-grid" id="calDays"></div>
         <div id="calTrend"></div>
-        <div class="cal-reward-small">
-          <strong>연속 출석 보상</strong><br />
-          3일 10코인 · 7일 20코인 · 14일 30코인 · 30일 40코인<br />
-          합계 최대 100코인 · 연속 출석 달성 시 자동 지급
-        </div>
       </div>
       <div class="card">
         <h2 style="margin-top:0;">마스코트 상점</h2>
@@ -852,6 +852,7 @@
     lastActiveYmd: "",
     questYmd: "",
     questDone: 0,
+    questSlots: [],
     questRewardYmd: "",
     totalAnswered: 0,
     monthAnswered: {},
@@ -927,6 +928,7 @@
       if (!s.mascot.owned.includes(s.mascot.active)) s.mascot.active = DEFAULT_MASCOT;
       if (!s.wrongTodayItems) s.wrongTodayItems = {};
       if (!s.wrongTodayYmd) s.wrongTodayYmd = ymd();
+      if (!Array.isArray(s.questSlots)) s.questSlots = [];
       normalizeBombKeys(s);
       return s;
     } catch {
@@ -1339,7 +1341,6 @@
     }
     if (p.moves == null) p.moves = 0;
     if (!p.maze || p.maze.version !== 7) p.maze = buildMonthMaze(mk, dayTotal);
-    if (!p.bombs) p.bombs = [];
     if (p.moves >= p.total) {
       p.moves = p.total;
       p.completed = true;
@@ -1347,64 +1348,20 @@
     return p;
   }
 
-  function unclearedMazeBombs(p) {
-    return (p?.bombs || []).filter((b) => !b.cleared);
-  }
-
-  function mazeBombPositions(p) {
-    const bombs = unclearedMazeBombs(p);
-    const out = [];
-    let idx = Math.min((p.moves || 0) + 1, (p.maze?.path?.length || 1) - 1);
-    bombs.forEach((b) => {
-      out.push({ wrongId: b.wrongId, pathIndex: idx });
-      idx = Math.min(idx + 1, (p.maze?.path?.length || 1) - 1);
-    });
-    return out;
-  }
-
-  function addMazeBombForWrong(base) {
-    const mk = monthKey();
-    const p = getPuzzleState(mk);
-    if (p.bombs.some((b) => b.wrongId === base && !b.cleared)) return;
-    const used = new Set(p.bombs.filter((b) => !b.cleared).map((b) => b.pathIndex));
-    let pathIndex = -1;
-    for (let i = Math.max(1, p.moves + 1); i < p.maze.path.length; i++) {
-      if (!used.has(i)) {
-        pathIndex = i;
-        break;
-      }
-    }
-    if (pathIndex < 0) {
-      for (let i = 1; i < p.maze.path.length; i++) {
-        if (!used.has(i)) {
-          pathIndex = i;
-          break;
-        }
-      }
-    }
-    if (pathIndex >= 0) p.bombs.push({ wrongId: base, pathIndex, cleared: false });
-    save();
-  }
-
   function clearMazeBomb(wrongId) {
     const base = baseQuestionId(wrongId);
-    const p = getPuzzleState(monthKey());
-    const bomb = p.bombs.find((b) => b.wrongId === base && !b.cleared);
-    if (!bomb) return false;
-    bomb.cleared = true;
+    const beforeLen = (state.wrongToday || []).length;
     state.wrongToday = (state.wrongToday || []).filter((id) => id !== base);
     delete state.wrongTodayItems[base];
+    const slots = state.questSlots || [];
+    const hit = slots.find((s) => s && s.base === base && s.wrong && !s.resolved);
+    if (hit) hit.resolved = true;
     save();
     renderQuestBlocks();
     renderHomeStats();
-    // 폭탄 제거는 전진이 아니라 길 정리만 한다.
     tryGrantDailyQuestRewards();
-    toast("💣 제거! 복습 정답으로 미로가 열렸어요");
-    return true;
-  }
-
-  function hasBlockingMazeBomb(p) {
-    return (p.moves || 0) < (p.total || 0) && unclearedMazeBombs(p).length > 0;
+    toast("오답 칸이 정답으로 복구됐어요");
+    return beforeLen !== (state.wrongToday || []).length || !!hit;
   }
 
   function mazeEmoji(x, y, emoji, size) {
@@ -1452,8 +1409,6 @@
     lines += mazeWallLine(right, top, right, exTop, wt);
     lines += mazeWallLine(right, exBot, right, bottom, wt);
     lines += mazeWallLine(left, bottom, right, bottom, wt);
-    const bombAt = new Map();
-    mazeBombPositions(p).forEach((b) => bombAt.set(b.pathIndex, b.wrongId));
     let markers = "";
     const startPt = maze.path[0];
     const sx = pad + startPt.c * cs + cs / 2;
@@ -1464,11 +1419,6 @@
       const pt = maze.path[i];
       const cx = pad + pt.c * cs + cs / 2;
       const cy = pad + pt.r * cs + cs / 2;
-      if (bombAt.has(i)) {
-        markers += `<circle cx="${cx}" cy="${cy}" r="8" fill="#fff0f3" stroke="#ff6b9d" stroke-width="2"/>`;
-        markers += mazeEmoji(cx, cy, "💣", 18);
-        continue;
-      }
       if (i === 0) continue;
       if (i < moves || done) {
         markers += `<circle cx="${cx}" cy="${cy}" r="3.5" fill="#7ee8c0" opacity="0.85"/>`;
@@ -1484,14 +1434,9 @@
     const ey = pad + maze.exit.r * cs + cs / 2;
     markers += `<text x="${ex}" y="${ey + 5}" text-anchor="middle" font-size="12">🏁</text>`;
     const leftMoves = Math.max(0, total - moves);
-    const bombN = unclearedMazeBombs(p).length;
     let extra = "";
-    if (bombN > 0) {
-      extra = `<p class="maze-bombs-hint">💣 ${bombN}개 · 학습 탭 「오늘 틀린 문제」 복습으로 제거</p>
-        <button type="button" class="secondary maze-bomb-btn" data-maze-bomb-review>💣 폭탄 제거하러 복습하기</button>`;
-    }
     if (!done) {
-      extra += `<button type="button" class="secondary maze-bomb-btn" data-maze-step style="margin-top:${bombN > 0 ? "6px" : "8px"};">🪙 100코인으로 한 칸 전진</button>`;
+      extra += `<button type="button" class="secondary maze-bomb-btn" data-maze-step style="margin-top:8px;">🪙 100코인으로 한 칸 전진</button>`;
     }
     return `<div class="maze-wrap">
       <svg class="maze-svg" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="명언 미로">
@@ -1521,13 +1466,6 @@
       html += `<div class="quote-kr">탈출하면 이번 달 일본어 명언이 공개돼요</div>`;
     }
     box.innerHTML = html;
-    const bombBtn = box.querySelector("[data-maze-bomb-review]");
-    if (bombBtn) {
-      bombBtn.addEventListener("click", () => {
-        switchToTab("learn");
-        startSession("오늘 틀린 문제 (💣 제거)", "review|today", false, true);
-      });
-    }
     const stepBtn = box.querySelector("[data-maze-step]");
     if (stepBtn) {
       stepBtn.addEventListener("click", () => {
@@ -1536,19 +1474,14 @@
     }
     const prog = document.getElementById("puzzleProg");
     if (prog) {
-      const bn = unclearedMazeBombs(p).length;
       prog.textContent = done
         ? `이동 ${p.moves} / ${p.total} · 탈출 완료!`
-        : `이동 ${p.moves} / ${p.total} · 탈출까지 ${p.total - p.moves}번${bn ? ` · 💣 ${bn}` : ""}`;
+        : `이동 ${p.moves} / ${p.total} · 탈출까지 ${p.total - p.moves}번`;
     }
   }
 
   function revealPuzzleLetter(mk) {
     const p = getPuzzleState(mk);
-    if (hasBlockingMazeBomb(p)) {
-      toast("앞길에 💣가 있어요! 「오늘 틀린 문제」 복습으로 제거하세요");
-      return;
-    }
     if (p.moves < p.total) {
       p.moves++;
       if (p.moves >= p.total && !p.completed) {
@@ -1567,10 +1500,6 @@
     }
     if (p.moves >= p.total) {
       toast("이미 미로를 탈출했어요");
-      return;
-    }
-    if (hasBlockingMazeBomb(p)) {
-      toast("💣를 먼저 제거해 주세요 · 「오늘 틀린 문제」 복습");
       return;
     }
     state.coins -= 100;
@@ -2585,7 +2514,6 @@
     if (q?.jp) state.wrongTodayItems[base] = snapshotForReview(q, base);
     state.wrongCount[base] = (state.wrongCount[base] || 0) + 1;
     addBomb(base, 1);
-    if (session.isDaily) addMazeBombForWrong(base);
     save();
     renderQuestBlocks();
     renderHomeStats();
@@ -2696,22 +2624,31 @@
     if (state.questYmd !== d) {
       state.questYmd = d;
       state.questDone = 0;
+      state.questSlots = [];
       state.questRewardYmd = "";
       save();
     }
+  }
+
+  function questPendingWrongCount() {
+    const slots = state.questSlots || [];
+    return slots.filter((s) => s && s.wrong && !s.resolved).length;
+  }
+
+  function questResolvedCount() {
+    const slots = state.questSlots || [];
+    return slots.reduce((acc, s) => {
+      if (!s) return acc;
+      if (!s.wrong) return acc + 1;
+      return acc + (s.resolved ? 1 : 0);
+    }, 0);
   }
 
   function tryGrantDailyQuestRewards() {
     const d = ymd();
     syncQuestDay();
     if (state.questRewardYmd === d) return;
-    if ((state.questDone || 0) < 10) return;
-    const p = getPuzzleState(monthKey());
-    if (unclearedMazeBombs(p).length > 0) {
-      toast("10문제 완료! 미로 💣 제거 → 학습 탭 「오늘 틀린 문제」");
-      renderQuestBlocks();
-      return;
-    }
+    if (questResolvedCount() < 10) return;
     state.questRewardYmd = d;
     state.coins += 100;
     revealPuzzleLetter(monthKey());
@@ -2748,32 +2685,30 @@
     const el = document.getElementById("questBlocks");
     el.innerHTML = "";
     syncQuestDay();
-    const p = getPuzzleState(monthKey());
-    const bombs = unclearedMazeBombs(p);
-    const bombsCleared = (p.bombs || []).filter((b) => b.cleared).length;
     const qDone = Math.min(10, state.questDone || 0);
-    const totalUnits = 10 + bombs.length + bombsCleared;
-    const filledUnits = qDone + bombsCleared;
-    const pct = totalUnits ? Math.round((filledUnits / totalUnits) * 100) : 0;
+    const slots = state.questSlots || [];
+    const resolved = questResolvedCount();
+    const pendingWrong = questPendingWrongCount();
+    const pct = Math.round((Math.min(10, resolved) / 10) * 100);
     for (let i = 0; i < 10; i++) {
       const b = document.createElement("div");
-      b.className = "qblock" + (i < qDone ? " on" : "");
+      const slot = slots[i];
+      let cls = "qblock";
+      if (i < qDone) {
+        cls += slot && slot.wrong && !slot.resolved ? " bomb" : " on";
+      }
+      b.className = cls;
       el.appendChild(b);
     }
-    (p.bombs || []).forEach((b) => {
-      const block = document.createElement("div");
-      block.className = "qblock bomb" + (b.cleared ? " on" : "");
-      el.appendChild(block);
-    });
     const pctEl = document.getElementById("questPercent");
     if (pctEl) pctEl.textContent = `${pct}%`;
     const status = document.getElementById("questStatusLine");
     if (status) {
       if (pct >= 100) status.textContent = "오늘 일일 퀘스트 100% 완료! 🎉";
-      else if (qDone >= 10 && bombs.length > 0) {
-        status.textContent = `10문제 완료 · 💣 ${bombs.length}개 남음 · 학습 탭 복습으로 100%`;
+      else if (qDone >= 10 && pendingWrong > 0) {
+        status.textContent = `10문제 완료 · 💣 ${pendingWrong}칸 오답 복습 필요`;
       } else {
-        status.textContent = `오늘 ${qDone}/10문제${bombs.length ? ` · 💣 ${bombs.length}` : ""}`;
+        status.textContent = `오늘 ${qDone}/10문제${pendingWrong ? ` · 💣 ${pendingWrong}` : ""}`;
       }
     }
     renderDailyQuestButton();
@@ -2786,17 +2721,16 @@
     syncQuestDay();
     const done = state.questDone || 0;
     const left = questRemaining();
-    const p = getPuzzleState(monthKey());
-    const bombsLeft = unclearedMazeBombs(p).length;
-    const fullyDone = left <= 0 && bombsLeft === 0 && state.questRewardYmd === ymd();
+    const pendingWrong = questPendingWrongCount();
+    const fullyDone = left <= 0 && pendingWrong === 0 && state.questRewardYmd === ymd();
     if (fullyDone) {
       btn.disabled = true;
       btn.textContent = "오늘 퀘스트 100% ✓";
       if (hint) hint.textContent = "내일 다시 10문제를 풀 수 있어요";
-    } else if (left <= 0 && bombsLeft > 0) {
+    } else if (left <= 0 && pendingWrong > 0) {
       btn.disabled = false;
-      btn.textContent = `💣 폭탄 제거 (${bombsLeft})`;
-      if (hint) hint.textContent = "10문제 완료 · 복습으로 💣 제거 후 100%";
+      btn.textContent = `오답 복습 (${pendingWrong})`;
+      if (hint) hint.textContent = "10칸 내부 오답(💣)을 복습 정답으로 바꾸면 100%";
     } else if (done > 0) {
       btn.disabled = false;
       btn.textContent = `이어하기 (${done}/10)`;
@@ -2808,9 +2742,12 @@
     }
   }
 
-  function questAdvance() {
+  function questAdvance(correct, qid) {
     syncQuestDay();
     if (state.questDone < 10) {
+      const base = baseQuestionId(qid || "");
+      state.questSlots = state.questSlots || [];
+      state.questSlots.push({ base, wrong: !correct, resolved: !!correct });
       state.questDone++;
       save();
       renderQuestBlocks();
@@ -3349,7 +3286,7 @@
     recordAttempt(!!correct);
     recordPracticeAttempt(!!correct);
     trackLearnQuestion(session.path, session.title);
-    if (session.isDaily) questAdvance();
+    if (session.isDaily) questAdvance(!!correct, q?.id);
     if (session.isReview && correct && q?.id) clearMazeBomb(q.id);
     wrap.style.outline = correct ? "2px solid var(--mint-dark)" : "2px solid var(--pink-deep)";
     renderHomeStats();
@@ -3381,10 +3318,9 @@
 
   document.getElementById("btnDailyQuest").addEventListener("click", () => {
     syncQuestDay();
-    const p = getPuzzleState(monthKey());
-    if ((state.questDone || 0) >= 10 && unclearedMazeBombs(p).length > 0) {
+    if ((state.questDone || 0) >= 10 && questPendingWrongCount() > 0) {
       switchToTab("learn");
-      startSession("오늘 틀린 문제 (💣 제거)", "review|today", false, true);
+      startSession("오늘 틀린 문제 (오답 복습)", "review|today", false, true);
       return;
     }
     const path =
